@@ -31,6 +31,7 @@ const el = {
   welcomeText: document.getElementById("welcomeText"),
   userMeta: document.getElementById("userMeta"),
   timeInStatus: document.getElementById("timeInStatus"),
+  cloudSyncStatus: document.getElementById("cloudSyncStatus"),
   openCalendarPanelBtn: document.getElementById("openCalendarPanelBtn"),
   openTicketPanelBtn: document.getElementById("openTicketPanelBtn"),
   openAccompPanelBtn: document.getElementById("openAccompPanelBtn"),
@@ -146,6 +147,8 @@ async function startDashboard() {
   await bootstrapCloudState();
   initDashboard();
   startCloudPolling(() => {
+    const previousUnread = state.lastUnreadCount;
+    const previousAnnouncement = state.lastAnnouncementAt;
     const refreshedUser = getCurrentUser();
     if (!refreshedUser) {
       window.location.href = "login.html";
@@ -161,6 +164,14 @@ async function startDashboard() {
     renderAnnouncements();
     renderUnreadAlert();
     if (state.activeChatUserId) renderChatThread();
+
+    const unreadNow = getUnreadMessageCount(getChats(), state.currentUser?.id, state.currentUser?.username);
+    const announcementNow = getLatestAnnouncementAt(buildPublicFeedItems());
+    if (unreadNow > previousUnread || (announcementNow && announcementNow > previousAnnouncement)) {
+      playNotificationSound();
+    }
+    state.lastUnreadCount = unreadNow;
+    state.lastAnnouncementAt = announcementNow;
   }, 2000);
 }
 
@@ -369,7 +380,22 @@ function bindHeader() {
   el.welcomeText.textContent = `Welcome, ${formatDisplayName(state.currentUser.fullname)}`;
   el.userMeta.textContent = `${state.currentUser.employeeCode || "-"} | ${state.currentUser.department} | ${state.currentUser.position} | ${state.currentUser.role}`;
   el.timeInStatus.textContent = buildTimeInStatusText(state.currentUser.id);
+  renderCloudSyncStatus();
   el.openAdminLogsPanelBtn.classList.toggle("hidden", state.currentUser.role !== "admin");
+}
+
+function renderCloudSyncStatus() {
+  if (!el.cloudSyncStatus) return;
+  const stateInfo = getCloudSyncState();
+  if (stateInfo.connected) {
+    el.cloudSyncStatus.textContent = "Cloud sync: connected";
+    el.cloudSyncStatus.classList.remove("offline");
+    el.cloudSyncStatus.classList.add("online");
+  } else {
+    el.cloudSyncStatus.textContent = "Cloud sync: offline (local-only)";
+    el.cloudSyncStatus.classList.remove("online");
+    el.cloudSyncStatus.classList.add("offline");
+  }
 }
 
 function fillTicketDefaults() {
@@ -419,7 +445,7 @@ function applyAdminTabVisibility() {
 }
 
 function initMessenger() {
-  const users = getUsers();
+  const users = getUniqueChatUsers(getUsers());
   el.chatEmployeeSelect.innerHTML = "";
   el.employeeNameList.innerHTML = "";
 
@@ -443,6 +469,7 @@ function initMessenger() {
     const option = document.createElement("option");
     option.value = user.id;
     option.textContent = `${formatDisplayName(user.fullname)} [${user.employeeCode || "-"}]`;
+    option.dataset.username = String(user.username || "").toLowerCase();
     el.chatEmployeeSelect.appendChild(option);
   });
 
@@ -464,6 +491,7 @@ function renderEmployeeNameList(users) {
     button.type = "button";
     button.className = "employee-name-btn";
     button.dataset.userId = user.id;
+    button.dataset.username = String(user.username || "").toLowerCase();
     button.innerHTML = `<span>${escapeHtml(formatDisplayName(user.fullname))}</span><i class=\"name-unread hidden\">0</i>`;
     button.addEventListener("click", () => openMessengerForUser(user.id));
     el.employeeNameList.appendChild(button);
@@ -490,19 +518,28 @@ function populateSignatories() {
 }
 
 function getConversationKey(userA, userB) {
-  return [userA, userB].sort().join("__");
+  return [getUserConversationToken(userA), getUserConversationToken(userB)].sort().join("__");
 }
 
 function getConversationMessages(otherUserId) {
   const chats = getChats();
   const key = getConversationKey(state.currentUser.id, otherUserId);
-  return Array.isArray(chats[key]) ? chats[key] : [];
+  const legacyKey = getLegacyConversationKey(state.currentUser.id, otherUserId);
+  const merged = mergeMessagesById([
+    ...(Array.isArray(chats[key]) ? chats[key] : []),
+    ...(Array.isArray(chats[legacyKey]) ? chats[legacyKey] : [])
+  ]);
+  return merged.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 }
 
 function setConversationMessages(otherUserId, messages) {
   const chats = getChats();
   const key = getConversationKey(state.currentUser.id, otherUserId);
+  const legacyKey = getLegacyConversationKey(state.currentUser.id, otherUserId);
   chats[key] = messages;
+  if (legacyKey !== key && chats[legacyKey]) {
+    delete chats[legacyKey];
+  }
   setChats(chats);
 }
 
@@ -521,7 +558,9 @@ async function sendChatMessage() {
     id: crypto.randomUUID(),
     senderId: state.currentUser.id,
     senderName: state.currentUser.fullname,
+    senderUsername: state.currentUser.username,
     receiverId: receiver.id,
+    receiverUsername: receiver.username,
     text,
     attachment: attachmentData,
     attachmentName: file?.name || "",
@@ -541,9 +580,12 @@ async function sendChatMessage() {
 function markConversationAsRead(otherUserId) {
   const messages = getConversationMessages(otherUserId);
   let changed = false;
+  const currentUsername = String(state.currentUser.username || "").toLowerCase();
 
   messages.forEach((message) => {
-    if (message.receiverId === state.currentUser.id) {
+    const isForCurrentUser = message.receiverId === state.currentUser.id
+      || String(message.receiverUsername || "").toLowerCase() === currentUsername;
+    if (isForCurrentUser) {
       const readBy = Array.isArray(message.readBy) ? message.readBy : [];
       if (!readBy.includes(state.currentUser.id)) {
         readBy.push(state.currentUser.id);
@@ -701,22 +743,26 @@ function deleteChatMessage(messageId) {
 function renderUnreadAlert() {
   const chats = getChats();
   const counts = {};
+  const currentUsername = String(state.currentUser.username || "").toLowerCase();
 
   Object.values(chats).forEach((messages) => {
     if (!Array.isArray(messages)) return;
     messages.forEach((message) => {
-      if (message.receiverId !== state.currentUser.id) return;
+      const isForCurrentUser = message.receiverId === state.currentUser.id
+        || String(message.receiverUsername || "").toLowerCase() === currentUsername;
+      if (!isForCurrentUser) return;
       const readBy = Array.isArray(message.readBy) ? message.readBy : [];
       if (!readBy.includes(state.currentUser.id)) {
-        counts[message.senderId] = (counts[message.senderId] || 0) + 1;
+        const senderToken = String(message.senderUsername || message.senderId || "").toLowerCase();
+        counts[senderToken] = (counts[senderToken] || 0) + 1;
       }
     });
   });
 
   document.querySelectorAll(".employee-name-btn").forEach((button) => {
     const badge = button.querySelector(".name-unread");
-    const userId = button.dataset.userId || "";
-    const value = counts[userId] || 0;
+    const token = String(button.dataset.username || button.dataset.userId || "").toLowerCase();
+    const value = counts[token] || 0;
     if (!badge) return;
     if (value > 0) {
       badge.textContent = String(value);
@@ -1193,7 +1239,7 @@ async function submitAnnouncement() {
 
 function renderAnnouncements() {
   const keyword = state.announcementFilter || "";
-  const items = getAnnouncements()
+  const items = buildPublicFeedItems()
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .filter((item) => {
@@ -1214,7 +1260,8 @@ function renderAnnouncements() {
   }
 
   items.forEach((item) => {
-    const canManagePost = state.currentUser.role === "admin" || item.userId === state.currentUser.id;
+    const isManualAnnouncement = item.sourceType === "announcement";
+    const canManagePost = isManualAnnouncement && (state.currentUser.role === "admin" || item.userId === state.currentUser.id);
     const article = document.createElement("article");
     article.className = "announcement-item";
     article.dataset.id = item.id;
@@ -1268,6 +1315,78 @@ function renderAnnouncements() {
 
     el.announcementFeed.appendChild(article);
   });
+}
+
+function buildPublicFeedItems() {
+  const announcements = getAnnouncements().map((item) => ({
+    ...item,
+    sourceType: item.sourceType || "announcement",
+    sourceId: item.sourceId || item.id
+  }));
+
+  const ticketPosts = getTickets().map((ticket) => ({
+    id: `ticket-${ticket.id}`,
+    userId: ticket.employeeId,
+    name: ticket.employeeName,
+    department: ticket.department,
+    date: (ticket.createdAt || "").slice(0, 10) || localDateKey(new Date()),
+    message: `Ticket ${ticket.ticketNumber} | ${ticket.subject} | Status: ${ticket.status}`,
+    attachment: ticket.attachment || "",
+    attachmentName: ticket.attachmentName || "",
+    createdAt: ticket.updatedAt || ticket.createdAt || new Date().toISOString(),
+    sourceType: "ticket",
+    sourceId: ticket.id
+  }));
+
+  const schedulePosts = getEvents().map((event) => ({
+    id: `event-${event.id}`,
+    userId: event.ownerId,
+    name: event.ownerName,
+    department: getUserDepartment(event.ownerId),
+    date: event.date || localDateKey(new Date()),
+    message: `Schedule | ${event.title} | ${event.date} | ${normalizeScheduleStatus(event.status)} | ${event.cityAssigned || "-"}`,
+    attachment: "",
+    attachmentName: "",
+    createdAt: event.updatedAt || event.createdAt || new Date().toISOString(),
+    sourceType: "schedule",
+    sourceId: event.id
+  }));
+
+  const accomplishmentPosts = getAccomplishments().map((report) => ({
+    id: `accomp-${report.id}`,
+    userId: report.userId,
+    name: report.employeeName,
+    department: getUserDepartment(report.userId),
+    date: report.date || localDateKey(new Date()),
+    message: `Accomplishment | ${report.activity}`,
+    attachment: report.attachment || "",
+    attachmentName: report.attachmentName || "",
+    createdAt: report.createdAt || new Date().toISOString(),
+    sourceType: "accomplishment",
+    sourceId: report.id
+  }));
+
+  const attendancePosts = getAttendance().map((entry) => ({
+    id: `attendance-${entry.id}`,
+    userId: entry.userId,
+    name: entry.fullname,
+    department: entry.department,
+    date: (entry.timeIn || "").slice(0, 10) || localDateKey(new Date()),
+    message: `Attendance | Time In: ${entry.timeIn ? new Date(entry.timeIn).toLocaleString() : "-"} | Time Out: ${entry.timeOut ? new Date(entry.timeOut).toLocaleString() : "-"}`,
+    attachment: "",
+    attachmentName: "",
+    createdAt: entry.timeOut || entry.timeIn || new Date().toISOString(),
+    sourceType: "attendance",
+    sourceId: entry.id
+  }));
+
+  const merged = [...announcements, ...ticketPosts, ...schedulePosts, ...accomplishmentPosts, ...attendancePosts];
+  const dedup = new Map();
+  merged.forEach((item) => {
+    const key = `${item.sourceType}|${item.sourceId || item.id}`;
+    if (!dedup.has(key)) dedup.set(key, item);
+  });
+  return Array.from(dedup.values());
 }
 
 function editAnnouncement(postId) {

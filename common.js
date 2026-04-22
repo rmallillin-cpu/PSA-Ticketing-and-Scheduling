@@ -31,6 +31,7 @@ let cloudPushTimer = null;
 let cloudPollingTimer = null;
 let cloudBusy = false;
 let cloudWarned = false;
+let cloudConnected = false;
 const CLOUD_SETUP_HINT = "Cloud sync is offline. Run supabase-setup.sql in Supabase SQL Editor and refresh.";
 
 const DEPARTMENTS = [
@@ -297,6 +298,7 @@ function formatDisplayName(fullname) {
 async function bootstrapCloudState() {
   if (!supabaseClient || cloudBusy) {
     warnCloudOnce("Supabase client not available. Running local-only mode.");
+    cloudConnected = false;
     return false;
   }
 
@@ -311,10 +313,12 @@ async function bootstrapCloudState() {
 
     if (error || !data) {
       warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+      cloudConnected = false;
       return false;
     }
     cloudUpdatedAt = data.updated_at || "";
     hydrateLocalStorageFromCloud(data.data || {});
+    cloudConnected = true;
     return true;
   } finally {
     cloudBusy = false;
@@ -400,10 +404,12 @@ async function pushCloudState() {
     if (error) {
       console.warn("Supabase push error:", error.message);
       warnCloudOnce(error.message || CLOUD_SETUP_HINT);
+      cloudConnected = false;
       return;
     }
     cloudUpdatedAt = data?.updated_at || cloudUpdatedAt;
     hydrateLocalStorageFromCloud(payload);
+    cloudConnected = true;
   } finally {
     cloudBusy = false;
   }
@@ -421,12 +427,14 @@ async function pullCloudStateIfNewer() {
 
     if (error || !data) {
       warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+      cloudConnected = false;
       return false;
     }
     const incoming = data.updated_at || "";
     if (incoming && cloudUpdatedAt && incoming <= cloudUpdatedAt) return false;
     cloudUpdatedAt = incoming;
     hydrateLocalStorageFromCloud(data.data || {});
+    cloudConnected = true;
     return true;
   } finally {
     cloudBusy = false;
@@ -519,4 +527,11 @@ function warnCloudOnce(message) {
   if (typeof notify === "function") {
     notify(CLOUD_SETUP_HINT, "error");
   }
+}
+
+function getCloudSyncState() {
+  return {
+    connected: cloudConnected,
+    updatedAt: cloudUpdatedAt || ""
+  };
 }
