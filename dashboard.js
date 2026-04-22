@@ -419,7 +419,7 @@ function applyAdminTabVisibility() {
 }
 
 function initMessenger() {
-  const users = getUsers().filter((user) => user.id !== state.currentUser.id);
+  const users = getUsers();
   el.chatEmployeeSelect.innerHTML = "";
   el.employeeNameList.innerHTML = "";
 
@@ -448,8 +448,9 @@ function initMessenger() {
 
   el.chatEmployeeSelect.disabled = false;
   el.chatForm.classList.remove("hidden");
-  state.activeChatUserId = users[0].id;
-  el.chatEmployeeSelect.value = users[0].id;
+  const defaultChatUser = users.find((user) => user.id !== state.currentUser.id) || users[0];
+  state.activeChatUserId = defaultChatUser.id;
+  el.chatEmployeeSelect.value = defaultChatUser.id;
   renderEmployeeNameList(users);
   markConversationAsRead(state.activeChatUserId);
   renderChatThread();
