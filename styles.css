@@ -146,6 +146,14 @@ a {
   justify-self: start;
 }
 
+.login-actions-right {
+  grid-column: 2;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
 .row-actions {
   display: flex;
   justify-content: flex-end;
@@ -1227,6 +1235,10 @@ th {
 
   #loginForm #loginUsername,
   #loginForm #loginPassword {
+    grid-column: 1;
+  }
+
+  .login-actions-right {
     grid-column: 1;
   }
 

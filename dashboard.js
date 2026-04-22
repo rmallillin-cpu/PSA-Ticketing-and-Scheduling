@@ -832,7 +832,15 @@ function saveEvent() {
 
   if (state.editingEventId) {
     const idx = events.findIndex((event) => event.id === state.editingEventId);
-    if (idx >= 0) events[idx] = { ...events[idx], ...payload };
+    if (idx >= 0) {
+      const prev = events[idx];
+      events[idx] = { ...events[idx], ...payload };
+      createSystemAnnouncement({
+        message: `SCHEDULE UPDATED: ${prev.title} -> ${title} on ${el.eventDate.value} (${normalizeScheduleStatus(el.eventStatus.value)})`,
+        attachment: "",
+        attachmentName: ""
+      });
+    }
     notify("Event updated.", "success");
   } else {
     events.push({ id: crypto.randomUUID(), ...payload, createdAt: new Date().toISOString() });
@@ -980,6 +988,11 @@ function setTicketStatus(ticketId, status) {
   tickets[idx].status = status;
   tickets[idx].updatedAt = new Date().toISOString();
   setTickets(tickets);
+  createSystemAnnouncement({
+    message: `TICKET STATUS UPDATED: ${tickets[idx].ticketNumber} - ${tickets[idx].subject} is now ${status.toUpperCase()}`,
+    attachment: "",
+    attachmentName: ""
+  });
 
   renderTickets();
   renderAdminLogs();
@@ -1061,6 +1074,11 @@ function updateTicketInfo() {
   tickets[idx].updatedAt = new Date().toISOString();
 
   setTickets(tickets);
+  createSystemAnnouncement({
+    message: `TICKET UPDATED: ${tickets[idx].ticketNumber} saved changes for "${tickets[idx].subject}"`,
+    attachment: "",
+    attachmentName: ""
+  });
   renderTickets();
   renderTicketModal(ticketId);
   renderAdminLogs();
