@@ -140,9 +140,10 @@ a {
 }
 
 #loginForm .btn {
-  width: 100%;
-  min-width: 0;
+  width: 1in;
+  min-width: 1in;
   height: 0.3in;
+  justify-self: start;
 }
 
 .row-actions {
