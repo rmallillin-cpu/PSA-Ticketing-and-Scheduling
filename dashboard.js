@@ -517,6 +517,40 @@ function populateSignatories() {
   el.updateSignatory.innerHTML = options;
 }
 
+function getUserConversationToken(userId) {
+  const users = getUsers();
+  const user = users.find((item) => item.id === userId);
+  const username = String(user?.username || "").trim().toLowerCase();
+  return username || String(userId || "").trim();
+}
+
+function getLegacyConversationKey(userA, userB) {
+  return [String(userA || "").trim(), String(userB || "").trim()].sort().join("__");
+}
+
+function mergeMessagesById(items) {
+  if (!Array.isArray(items) || !items.length) return [];
+  const byId = new Map();
+  items.forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const key = String(item.id || "").trim() || `${item.senderId || ""}|${item.receiverId || ""}|${item.createdAt || ""}|${item.text || ""}`;
+    if (!byId.has(key)) byId.set(key, item);
+  });
+  return Array.from(byId.values());
+}
+
+function getUniqueChatUsers(users) {
+  if (!Array.isArray(users)) return [];
+  const map = new Map();
+  users.forEach((user) => {
+    if (!user || !user.id) return;
+    if (user.id === state.currentUser?.id) return;
+    const key = String(user.username || user.id).toLowerCase();
+    if (!map.has(key)) map.set(key, user);
+  });
+  return Array.from(map.values()).sort((a, b) => formatDisplayName(a.fullname).localeCompare(formatDisplayName(b.fullname)));
+}
+
 function getConversationKey(userA, userB) {
   return [getUserConversationToken(userA), getUserConversationToken(userB)].sort().join("__");
 }
@@ -1447,8 +1481,8 @@ function createSystemAnnouncement({ message, attachment, attachmentName }) {
 }
 
 function initializeNotificationState() {
-  state.lastAnnouncementAt = getLatestAnnouncementAt(getAnnouncements());
-  state.lastUnreadCount = getUnreadMessageCount(getChats(), state.currentUser?.id);
+  state.lastAnnouncementAt = getLatestAnnouncementAt(buildPublicFeedItems());
+  state.lastUnreadCount = getUnreadMessageCount(getChats(), state.currentUser?.id, state.currentUser?.username);
 }
 
 function handleStorageUpdate(event) {
@@ -1465,7 +1499,7 @@ function handleStorageUpdate(event) {
 
   if (event.key === STORAGE_KEYS.chats) {
     const chats = getChats();
-    const unread = getUnreadMessageCount(chats, state.currentUser?.id);
+    const unread = getUnreadMessageCount(chats, state.currentUser?.id, state.currentUser?.username);
     const hasNewUnread = unread > state.lastUnreadCount;
     state.lastUnreadCount = unread;
     renderUnreadAlert();
@@ -1482,14 +1516,19 @@ function getLatestAnnouncementAt(items) {
   }, "");
 }
 
-function getUnreadMessageCount(chats, userId) {
-  if (!userId || !chats || typeof chats !== "object") return 0;
+function getUnreadMessageCount(chats, userId, username) {
+  if ((!userId && !username) || !chats || typeof chats !== "object") return 0;
 
+  const normalizedUsername = String(username || "").toLowerCase();
   let count = 0;
   Object.values(chats).forEach((messages) => {
     if (!Array.isArray(messages)) return;
     messages.forEach((message) => {
-      if (message.receiverId !== userId) return;
+      const receiverIdMatch = userId ? message.receiverId === userId : false;
+      const receiverUsernameMatch = normalizedUsername
+        ? String(message.receiverUsername || "").toLowerCase() === normalizedUsername
+        : false;
+      if (!receiverIdMatch && !receiverUsernameMatch) return;
       const readBy = Array.isArray(message.readBy) ? message.readBy : [];
       if (!readBy.includes(userId)) count += 1;
     });
