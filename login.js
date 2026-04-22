@@ -1,6 +1,5 @@
 const loginEls = {
   loginForm: document.getElementById("loginForm"),
-  loginMode: document.getElementById("loginMode"),
   loginUsername: document.getElementById("loginUsername"),
   loginPassword: document.getElementById("loginPassword"),
   showSignupBtn: document.getElementById("showSignupBtn"),
@@ -68,22 +67,11 @@ function initLogin() {
 function doLogin() {
   const username = loginEls.loginUsername.value.trim();
   const password = loginEls.loginPassword.value;
-  const mode = loginEls.loginMode.value;
 
   const user = getUsers().find((u) => u.username === username && u.password === password);
 
   if (!user) {
     notify("Invalid username or password.", "error");
-    return;
-  }
-
-  if (mode === "admin" && user.role !== "admin") {
-    notify("Please use User mode for this account.", "error");
-    return;
-  }
-
-  if (mode === "user" && user.role === "admin") {
-    notify("Please use Admin mode for this account.", "error");
     return;
   }
 

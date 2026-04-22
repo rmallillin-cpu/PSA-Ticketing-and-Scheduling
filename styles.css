@@ -129,10 +129,6 @@ a {
   align-items: center;
 }
 
-#loginPassword {
-  grid-column: 1 / -1;
-}
-
 .row-actions {
   display: flex;
   justify-content: flex-end;
@@ -226,10 +222,16 @@ textarea:focus {
 .btn {
   border: 1px solid rgba(102, 136, 177, 0.4);
   border-radius: 10px;
-  padding: 6px 12px;
+  width: 1in;
+  height: 0.3in;
+  padding: 0 10px;
   cursor: pointer;
   font-weight: 600;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .btn:hover {
@@ -259,8 +261,7 @@ textarea:focus {
 }
 
 .btn.tiny {
-  padding: 5px 10px;
-  font-size: 1rem;
+  font-size: 0.92rem;
   margin-right: 4px;
 }
 
@@ -1214,7 +1215,6 @@ th {
     grid-template-columns: 1fr;
   }
 
-  #loginPassword,
   .form-full {
     grid-column: 1;
   }
