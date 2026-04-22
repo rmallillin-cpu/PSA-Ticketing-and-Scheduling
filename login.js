@@ -28,7 +28,7 @@ async function startLogin() {
   initLogin();
   startCloudPolling(() => {
     renderLoginStatusTables();
-  });
+  }, 2000);
 }
 
 function initLogin() {

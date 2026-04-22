@@ -161,7 +161,7 @@ async function startDashboard() {
     renderAnnouncements();
     renderUnreadAlert();
     if (state.activeChatUserId) renderChatThread();
-  });
+  }, 2000);
 }
 
 function initDashboard() {
