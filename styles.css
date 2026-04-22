@@ -129,6 +129,22 @@ a {
   align-items: center;
 }
 
+#loginForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+#loginForm #loginUsername,
+#loginForm #loginPassword {
+  grid-column: auto;
+}
+
+#loginForm .btn {
+  width: 100%;
+  min-width: 0;
+  height: 0.3in;
+}
+
 .row-actions {
   display: flex;
   justify-content: flex-end;
@@ -1206,6 +1222,11 @@ th {
 
   .single-row-login {
     grid-template-columns: 1fr;
+  }
+
+  #loginForm #loginUsername,
+  #loginForm #loginPassword {
+    grid-column: 1;
   }
 
   .form-two-col,
