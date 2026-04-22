@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSA Login</title>
+  <link rel="icon" type="image/png" href="logo/PSA.png" />
+  <link rel="apple-touch-icon" href="logo/PSA.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="toastContainer" class="toast-container"></div>
+
+  <main class="app-shell login-shell">
+    <section class="card auth-card">
+      <header class="brand-header">
+        <img src="logo/PSA.png" alt="PSA Logo" class="psa-logo" />
+        <div>
+          <h1>PSA Ticketing and Schedule Portal</h1>
+          <p>Employees and Administrators Access</p>
+        </div>
+      </header>
+
+      <form id="loginForm" class="single-row-login form-two-col" autocomplete="on">
+        <select id="loginMode" aria-label="Login type">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <input type="text" id="loginUsername" placeholder="Username" required />
+        <input type="password" id="loginPassword" placeholder="Password" required />
+        <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Login</span></button>
+        <button type="button" id="showSignupBtn" class="btn secondary">Sign Up</button>
+      </form>
+
+      <section class="login-status-wrap">
+        <div class="section-title-row">
+          <h3>Tickets Status</h3>
+        </div>
+        <div class="status-filters">
+          <input type="text" id="loginTicketSearch" placeholder="Search ticket #, activity, signatory, status" />
+          <input type="text" id="loginNameFilter" placeholder="Filter by sender name" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#Ticket</th>
+                <th>Name of Sender</th>
+                <th>Signatory</th>
+                <th>Name of Activity</th>
+                <th>Deadline Progress</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="loginTicketStatusBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="login-status-wrap">
+        <div class="section-title-row">
+          <h3>Calendar Schedule Status</h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name of Activity and Name of Employee</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="loginScheduleStatusBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="signupModal" class="modal">
+    <form method="dialog" id="signupForm" class="modal-body form-two-col" autocomplete="on">
+      <h2 class="form-full">Sign Up Form</h2>
+      <label>Username
+        <input type="text" id="signupUsername" required />
+      </label>
+      <label>Full name
+        <input type="text" id="signupFullname" required />
+      </label>
+      <label>Employee ID
+        <input type="text" id="signupEmployeeId" required />
+      </label>
+      <label>Email
+        <input type="email" id="signupEmail" required />
+      </label>
+      <label>Department
+        <select id="signupDepartment" required></select>
+      </label>
+      <label>Position
+        <select id="signupPosition" required></select>
+      </label>
+      <label>
+        Password
+        <input type="password" id="signupPassword" minlength="6" required />
+      </label>
+      <label>
+        Profile Picture
+        <input type="file" id="signupProfilePic" accept="image/*" required />
+      </label>
+      <label class="inline-check form-full">
+        <input type="checkbox" id="signupIsAdmin" />
+        Register as admin account
+      </label>
+      <div class="row-actions form-full">
+        <button type="button" id="cancelSignupBtn" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Create account</span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="common.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
