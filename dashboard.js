@@ -919,9 +919,6 @@ function visibleTickets() {
   const senderKeyword = el.ticketSenderSearch.value.trim().toLowerCase();
 
   return getTickets().filter((ticket) => {
-    const allowed = state.currentUser.role === "admin" || ticket.employeeId === state.currentUser.id;
-    if (!allowed) return false;
-
     const keywordPass = !keyword || [ticket.ticketNumber, ticket.subject, ticket.status, ticket.signatoryName]
       .join(" ")
       .toLowerCase()
@@ -1420,7 +1417,6 @@ function playFallbackBeep() {
 
 function renderAccomplishments() {
   const reports = getAccomplishments()
-    .filter((report) => state.currentUser.role === "admin" || report.userId === state.currentUser.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   el.accomplishmentTableBody.innerHTML = "";

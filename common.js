@@ -362,10 +362,19 @@ async function pushCloudState() {
   if (!supabaseClient || cloudBusy) return;
   cloudBusy = true;
   try {
-    const payload = {};
+    const localPayload = {};
     CLOUD_SYNC_KEYS.forEach((key) => {
-      payload[key] = getParsedStorageValue(key);
+      localPayload[key] = getParsedStorageValue(key);
     });
+
+    const { data: remoteRow } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .select("data")
+      .eq("id", CLOUD_STATE_ROW_ID)
+      .single();
+
+    const remotePayload = remoteRow?.data || {};
+    const payload = mergePortalState(remotePayload, localPayload);
 
     const { data, error } = await supabaseClient
       .from(CLOUD_STATE_TABLE)
@@ -384,6 +393,7 @@ async function pushCloudState() {
       return;
     }
     cloudUpdatedAt = data?.updated_at || cloudUpdatedAt;
+    hydrateLocalStorageFromCloud(payload);
   } finally {
     cloudBusy = false;
   }
@@ -436,4 +446,54 @@ function getParsedStorageValue(key) {
   } catch {
     return raw;
   }
+}
+
+function mergePortalState(remoteData, localData) {
+  const merged = {};
+  CLOUD_SYNC_KEYS.forEach((key) => {
+    if (key === STORAGE_KEYS.ticketCounter) {
+      const remoteCounter = Number(remoteData[key] || 1);
+      const localCounter = Number(localData[key] || 1);
+      merged[key] = String(Math.max(remoteCounter, localCounter, 1));
+      return;
+    }
+
+    if (key === STORAGE_KEYS.chats) {
+      merged[key] = mergeChats(remoteData[key], localData[key]);
+      return;
+    }
+
+    merged[key] = mergeById(remoteData[key], localData[key]);
+  });
+  return merged;
+}
+
+function mergeById(remoteArr, localArr) {
+  const map = new Map();
+  (Array.isArray(remoteArr) ? remoteArr : []).forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const key = item.id || JSON.stringify(item);
+    map.set(key, item);
+  });
+
+  (Array.isArray(localArr) ? localArr : []).forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const key = item.id || JSON.stringify(item);
+    map.set(key, item);
+  });
+
+  return Array.from(map.values());
+}
+
+function mergeChats(remoteChats, localChats) {
+  const remote = remoteChats && typeof remoteChats === "object" ? remoteChats : {};
+  const local = localChats && typeof localChats === "object" ? localChats : {};
+  const keys = new Set([...Object.keys(remote), ...Object.keys(local)]);
+  const out = {};
+
+  keys.forEach((conversationKey) => {
+    out[conversationKey] = mergeById(remote[conversationKey], local[conversationKey]);
+  });
+
+  return out;
 }
