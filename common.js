@@ -9,6 +9,27 @@ const STORAGE_KEYS = {
   announcements: "psa_announcements",
   ticketCounter: "psa_ticket_counter"
 };
+const SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
+const CLOUD_STATE_TABLE = "portal_state";
+const CLOUD_STATE_ROW_ID = 1;
+const CLOUD_SYNC_KEYS = [
+  STORAGE_KEYS.users,
+  STORAGE_KEYS.events,
+  STORAGE_KEYS.tickets,
+  STORAGE_KEYS.chats,
+  STORAGE_KEYS.accomplishments,
+  STORAGE_KEYS.attendance,
+  STORAGE_KEYS.announcements,
+  STORAGE_KEYS.ticketCounter
+];
+const supabaseClient = window.supabase?.createClient
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+  : null;
+let cloudUpdatedAt = "";
+let cloudPushTimer = null;
+let cloudPollingTimer = null;
+let cloudBusy = false;
 
 const DEPARTMENTS = [
   "Statistical & Technical",
@@ -65,6 +86,7 @@ function readStorage(key, fallback) {
 
 function writeStorage(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
+  scheduleCloudPush();
 }
 
 function getUsers() {
@@ -205,6 +227,7 @@ function ensureSeeds() {
 
   if (!localStorage.getItem(STORAGE_KEYS.ticketCounter)) {
     localStorage.setItem(STORAGE_KEYS.ticketCounter, "1");
+    scheduleCloudPush();
   }
 }
 
@@ -216,6 +239,7 @@ function getNextTicketNumber() {
 function incrementTicketCounter() {
   const counter = Number(localStorage.getItem(STORAGE_KEYS.ticketCounter) || "1");
   localStorage.setItem(STORAGE_KEYS.ticketCounter, String(counter + 1));
+  scheduleCloudPush();
 }
 
 function formatDateKey(year, month, day) {
@@ -266,4 +290,150 @@ function formatDisplayName(fullname) {
   const last = parts[parts.length - 1];
   const middle = parts.length > 2 ? `${parts[1][0] || ""}.` : "";
   return `${last.toUpperCase()}, ${first.toUpperCase()}${middle ? `, ${middle.toUpperCase()}` : ""}`;
+}
+
+async function bootstrapCloudState() {
+  if (!supabaseClient || cloudBusy) return false;
+
+  cloudBusy = true;
+  try {
+    await ensureCloudRow();
+    const { data, error } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .select("updated_at, data")
+      .eq("id", CLOUD_STATE_ROW_ID)
+      .single();
+
+    if (error || !data) return false;
+    cloudUpdatedAt = data.updated_at || "";
+    hydrateLocalStorageFromCloud(data.data || {});
+    return true;
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+function startCloudPolling(onUpdate, intervalMs = 8000) {
+  if (!supabaseClient) return;
+  if (cloudPollingTimer) clearInterval(cloudPollingTimer);
+
+  cloudPollingTimer = setInterval(async () => {
+    const changed = await pullCloudStateIfNewer();
+    if (changed && typeof onUpdate === "function") onUpdate();
+  }, intervalMs);
+}
+
+function stopCloudPolling() {
+  if (cloudPollingTimer) clearInterval(cloudPollingTimer);
+  cloudPollingTimer = null;
+}
+
+function scheduleCloudPush(delayMs = 350) {
+  if (!supabaseClient) return;
+  if (cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(() => {
+    void pushCloudState();
+  }, delayMs);
+}
+
+async function ensureCloudRow() {
+  if (!supabaseClient) return;
+  const defaults = {};
+  CLOUD_SYNC_KEYS.forEach((key) => {
+    defaults[key] = getParsedStorageValue(key);
+  });
+
+  const { error } = await supabaseClient
+    .from(CLOUD_STATE_TABLE)
+    .upsert(
+      {
+        id: CLOUD_STATE_ROW_ID,
+        data: defaults
+      },
+      { onConflict: "id" }
+    );
+
+  if (error) {
+    console.warn("Supabase init row error:", error.message);
+  }
+}
+
+async function pushCloudState() {
+  if (!supabaseClient || cloudBusy) return;
+  cloudBusy = true;
+  try {
+    const payload = {};
+    CLOUD_SYNC_KEYS.forEach((key) => {
+      payload[key] = getParsedStorageValue(key);
+    });
+
+    const { data, error } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .upsert(
+        {
+          id: CLOUD_STATE_ROW_ID,
+          data: payload
+        },
+        { onConflict: "id" }
+      )
+      .select("updated_at")
+      .single();
+
+    if (error) {
+      console.warn("Supabase push error:", error.message);
+      return;
+    }
+    cloudUpdatedAt = data?.updated_at || cloudUpdatedAt;
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+async function pullCloudStateIfNewer() {
+  if (!supabaseClient || cloudBusy) return false;
+  cloudBusy = true;
+  try {
+    const { data, error } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .select("updated_at, data")
+      .eq("id", CLOUD_STATE_ROW_ID)
+      .single();
+
+    if (error || !data) return false;
+    const incoming = data.updated_at || "";
+    if (incoming && cloudUpdatedAt && incoming <= cloudUpdatedAt) return false;
+    cloudUpdatedAt = incoming;
+    hydrateLocalStorageFromCloud(data.data || {});
+    return true;
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+function hydrateLocalStorageFromCloud(cloudData) {
+  CLOUD_SYNC_KEYS.forEach((key) => {
+    const value = cloudData[key];
+    if (typeof value === "undefined") return;
+    if (key === STORAGE_KEYS.ticketCounter) {
+      localStorage.setItem(key, String(value ?? "1"));
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify(value));
+  });
+}
+
+function getParsedStorageValue(key) {
+  const raw = localStorage.getItem(key);
+  if (raw === null || raw === undefined) {
+    if (key === STORAGE_KEYS.ticketCounter) return "1";
+    if (key === STORAGE_KEYS.chats) return {};
+    return [];
+  }
+
+  if (key === STORAGE_KEYS.ticketCounter) return String(raw);
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
 }

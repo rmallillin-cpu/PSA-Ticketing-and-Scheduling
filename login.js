@@ -22,7 +22,15 @@ const loginEls = {
   loginScheduleStatusBody: document.getElementById("loginScheduleStatusBody")
 };
 
-initLogin();
+startLogin();
+
+async function startLogin() {
+  await bootstrapCloudState();
+  initLogin();
+  startCloudPolling(() => {
+    renderLoginStatusTables();
+  });
+}
 
 function initLogin() {
   ensureSeeds();

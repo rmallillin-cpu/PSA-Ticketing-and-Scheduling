@@ -140,7 +140,29 @@ const el = {
   chatSelectedFile: document.getElementById("chatSelectedFile")
 };
 
-initDashboard();
+startDashboard();
+
+async function startDashboard() {
+  await bootstrapCloudState();
+  initDashboard();
+  startCloudPolling(() => {
+    const refreshedUser = getCurrentUser();
+    if (!refreshedUser) {
+      window.location.href = "login.html";
+      return;
+    }
+    state.currentUser = refreshedUser;
+    bindHeader();
+    renderCalendar();
+    renderCalendarView();
+    renderTickets();
+    renderAccomplishments();
+    renderAdminLogs();
+    renderAnnouncements();
+    renderUnreadAlert();
+    if (state.activeChatUserId) renderChatThread();
+  });
+}
 
 function initDashboard() {
   ensureSeeds();

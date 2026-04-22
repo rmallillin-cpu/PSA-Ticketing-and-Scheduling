@@ -185,6 +185,19 @@ form label:not(.inline-check):not(.chat-clip-btn) {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  justify-self: start;
+}
+
+.inline-check input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  min-height: 12px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: #1785a7;
 }
 
 input,
