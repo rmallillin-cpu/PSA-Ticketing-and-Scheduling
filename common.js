@@ -30,6 +30,8 @@ let cloudUpdatedAt = "";
 let cloudPushTimer = null;
 let cloudPollingTimer = null;
 let cloudBusy = false;
+let cloudWarned = false;
+const CLOUD_SETUP_HINT = "Cloud sync is offline. Run supabase-setup.sql in Supabase SQL Editor and refresh.";
 
 const DEPARTMENTS = [
   "Statistical & Technical",
@@ -293,7 +295,10 @@ function formatDisplayName(fullname) {
 }
 
 async function bootstrapCloudState() {
-  if (!supabaseClient || cloudBusy) return false;
+  if (!supabaseClient || cloudBusy) {
+    warnCloudOnce("Supabase client not available. Running local-only mode.");
+    return false;
+  }
 
   cloudBusy = true;
   try {
@@ -304,7 +309,10 @@ async function bootstrapCloudState() {
       .eq("id", CLOUD_STATE_ROW_ID)
       .single();
 
-    if (error || !data) return false;
+    if (error || !data) {
+      warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+      return false;
+    }
     cloudUpdatedAt = data.updated_at || "";
     hydrateLocalStorageFromCloud(data.data || {});
     return true;
@@ -355,6 +363,7 @@ async function ensureCloudRow() {
 
   if (error) {
     console.warn("Supabase init row error:", error.message);
+    warnCloudOnce(error.message || CLOUD_SETUP_HINT);
   }
 }
 
@@ -390,6 +399,7 @@ async function pushCloudState() {
 
     if (error) {
       console.warn("Supabase push error:", error.message);
+      warnCloudOnce(error.message || CLOUD_SETUP_HINT);
       return;
     }
     cloudUpdatedAt = data?.updated_at || cloudUpdatedAt;
@@ -409,7 +419,10 @@ async function pullCloudStateIfNewer() {
       .eq("id", CLOUD_STATE_ROW_ID)
       .single();
 
-    if (error || !data) return false;
+    if (error || !data) {
+      warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+      return false;
+    }
     const incoming = data.updated_at || "";
     if (incoming && cloudUpdatedAt && incoming <= cloudUpdatedAt) return false;
     cloudUpdatedAt = incoming;
@@ -496,4 +509,14 @@ function mergeChats(remoteChats, localChats) {
   });
 
   return out;
+}
+
+function warnCloudOnce(message) {
+  if (cloudWarned) return;
+  cloudWarned = true;
+  const msg = message || CLOUD_SETUP_HINT;
+  console.warn("Cloud sync warning:", msg);
+  if (typeof notify === "function") {
+    notify(CLOUD_SETUP_HINT, "error");
+  }
 }
