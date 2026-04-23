@@ -48,9 +48,9 @@ function initLogin() {
     loginEls.signupModal.close();
   });
 
-  loginEls.loginForm.addEventListener("submit", (event) => {
+  loginEls.loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    doLogin();
+    await doLogin();
   });
 
   loginEls.signupForm.addEventListener("submit", async (event) => {
@@ -64,7 +64,7 @@ function initLogin() {
   renderLoginStatusTables();
 }
 
-function doLogin() {
+async function doLogin() {
   const username = loginEls.loginUsername.value.trim();
   const password = loginEls.loginPassword.value;
 
@@ -77,6 +77,11 @@ function doLogin() {
 
   setSession(user);
   logTimeIn(user);
+  try {
+    await pushCloudState();
+  } catch {
+    // Continue to dashboard even if immediate push fails; polling can recover.
+  }
   notify("Login successful.", "success");
   setTimeout(() => {
     window.location.href = "dashboard.html";

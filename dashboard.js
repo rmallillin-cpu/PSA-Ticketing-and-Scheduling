@@ -220,7 +220,7 @@ function bindEvents() {
     el.messengerModal.close();
   });
 
-  el.logoutBtn.addEventListener("click", () => {
+  el.logoutBtn.addEventListener("click", async () => {
     const now = new Date();
     const timeOutText = now.toLocaleString();
     createSystemAnnouncement({
@@ -231,6 +231,11 @@ function bindEvents() {
     logTimeOut(state.currentUser.id);
     window.alert(`Thank you ${formatDisplayName(state.currentUser.fullname)} (${state.currentUser.department}) Just Time-out ${timeOutText}`);
     clearSession();
+    try {
+      await pushCloudState();
+    } catch {
+      // Allow logout flow to continue even when immediate push fails.
+    }
     window.location.href = "login.html";
   });
 
