@@ -100,6 +100,7 @@ const el = {
   accompFile: document.getElementById("accompFile"),
   accomplishmentTableBody: document.getElementById("accomplishmentTableBody"),
   adminGroupSelect: document.getElementById("adminGroupSelect"),
+  adminStatsSummary: document.getElementById("adminStatsSummary"),
   adminLogsSection: document.getElementById("adminLogsSection"),
   adminDepartmentFilter: document.getElementById("adminDepartmentFilter"),
   adminNameFilter: document.getElementById("adminNameFilter"),
@@ -1111,7 +1112,6 @@ function renderDailyScheduleTable(dateKey) {
   const events = getEvents().filter(e => e.date === dateKey);
   const userMap = new Map(getUsers().map(u => [u.id, u]));
   
-  el.he
   if (!events.length) {
     el.dailyScheduleContainer.classList.add("hidden");
     return;
@@ -1980,9 +1980,35 @@ function renderAdminLogs() {
 
   el.adminLogsSection.classList.remove("hidden");
   applyAdminTabVisibility();
+  renderAdminStats();
   renderAdminScheduleLogs();
   renderAdminTicketLogs();
   renderAdminAccomplishmentLogs();
+}
+
+function renderAdminStats() {
+  if (!el.adminStatsSummary) return;
+  const tickets = getTickets();
+  const stats = {};
+  
+  DEPARTMENTS.forEach(dept => {
+    stats[dept] = 0;
+  });
+  
+  tickets.forEach(ticket => {
+    const dept = ticket.department || "Other";
+    stats[dept] = (stats[dept] || 0) + 1;
+  });
+
+  el.adminStatsSummary.innerHTML = Object.entries(stats)
+    .sort((a, b) => b[1] - a[1])
+    .map(([dept, count]) => `
+      <div class="stat-box">
+        <p>${escapeHtml(dept)}</p>
+        <h3>${count}</h3>
+        <span style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">Total Tickets</span>
+      </div>
+    `).join("");
 }
 
 function renderAdminScheduleLogs() {
