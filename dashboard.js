@@ -1105,12 +1105,13 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
 function renderDailyScheduleTable(dateKey) {
   if (!el.dailyScheduleTableBody) return;
 
+  // Show date immediately for feedback
+  el.selectedScheduleDate.textContent = dateKey;
+
   const events = getEvents().filter(e => e.date === dateKey);
   const userMap = new Map(getUsers().map(u => [u.id, u]));
   
-  el.selectedScheduleDate.textContent = dateKey;
-  el.dailyScheduleTableBody.innerHTML = "";
-
+  el.he
   if (!events.length) {
     el.dailyScheduleContainer.classList.add("hidden");
     return;
@@ -1310,8 +1311,7 @@ function renderTickets() {
         <td>${escapeHtml(ticket.subject)}</td>
         <td><div class="deadline-progress-wrap"><progress value="${progress}" max="100"></progress><span>${progress}%</span></div></td>
         <td><span class="status-badge status-${ticket.status}">${displayStatus}</span></td>
-        <td>${escapeHtml(ticket.signatoryName || "-")}</td>
-        <td>${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
+        <td>${escapeHtml(formatDisplayName(ticket.signatoryName || "-"))}</td>ttachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
         <td></td>
       `;
 
