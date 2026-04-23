@@ -85,60 +85,6 @@
     </form>
   </dialog>
 
-  <dialog id="calendarPanelModal" class="modal wide">
-    <div class="modal-body">
-      <div class="section-title-row table-head-row">
-        <h3>Schedule calendar</h3>
-        <div class="calendar-nav">
-          <button id="prevMonth" class="btn tiny">Prev</button>
-          <span id="calendarMonth"></span>
-          <button id="nextMonth" class="btn tiny">Next</button>
-          <button id="openCalendarViewBtn" class="btn tiny secondary">View calendar</button>
-          <button id="closeCalendarPanelBtn" class="btn tiny ghost" type="button">Close</button>
-        </div>
-      </div>
-      <div id="calendarGrid" class="calendar-grid"></div>
-      <div class="calendar-legend">
-        <span><i class="dot mine"></i>Your event</span>
-        <span><i class="dot shared"></i>Assigned event</span>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="ticketPanelModal" class="modal wide">
-    <div class="modal-body">
-      <div class="section-title-row table-head-row">
-        <h3>Ticket</h3>
-        <button id="closeTicketPanelBtn" class="btn tiny ghost" type="button">Close</button>
-      </div>
-      <form id="ticketForm" class="ticket-form form-two-col">
-        <label>Ticket number<input type="text" id="ticketNumber" readonly /></label>
-        <label>Department<input type="text" id="ticketDepartment" readonly /></label>
-        <label>Position<input type="text" id="ticketPosition" readonly /></label>
-        <label>Subject<input type="text" id="ticketSubject" required /></label>
-        <label>Deadline<input type="date" id="ticketDeadline" required /></label>
-        <label class="form-full">Details<textarea id="ticketDetails" rows="3" required></textarea></label>
-        <label>Signatory<select id="ticketSignatory" required></select></label>
-        <label>Upload file<input type="file" id="ticketAttachment" /></label>
-        <button type="submit" class="btn tiny secondary form-full submit-btn"><img src="logo/submit.png" alt="" /><span>Submit ticket</span></button>
-      </form>
-      <div class="section-title-row table-head-row">
-        <h4>Queued tickets</h4>
-        <div class="status-filters">
-          <input id="ticketSearch" type="text" placeholder="Search ticket #/subject/status/signatory" />
-          <input id="ticketSenderSearch" type="text" placeholder="Search sender name" />
-        </div>
-        <button id="printUserTicketsBtn" class="btn tiny secondary" type="button">Print</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>TICKET #</th><th>SUBJECT</th><th>STATUS</th><th>SIGNATORY</th><th>FILE</th><th>ACTIONS</th></tr></thead>
-          <tbody id="ticketsTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </dialog>
-
   <dialog id="accompPanelModal" class="modal wide">
     <div class="modal-body">
       <div class="section-title-row table-head-row">
@@ -263,8 +209,3 @@
   <script src="dashboard.js?v=20260423m"></script>
 </body>
 </html>
-
-
-
-
-
