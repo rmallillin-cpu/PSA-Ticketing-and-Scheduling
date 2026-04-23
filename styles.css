@@ -419,6 +419,13 @@ textarea:focus {
   padding: 20px;
 }
 
+.sidebar-search {
+  margin-bottom: 10px;
+  min-height: 30px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
 .left-nav-panel {
   position: sticky;
   top: 66px;
@@ -1152,6 +1159,14 @@ td {
   font-size: 0.9rem;
   color: #1e293b;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.group-header-row td {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
 }
 
 .icon-action-btn {

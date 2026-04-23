@@ -27,6 +27,7 @@ const state = {
 };
 
 const el = {
+  employeeSearchInput: document.getElementById("employeeSearchInput"),
   globalSearchInput: document.getElementById("globalSearchInput"),
   welcomeText: document.getElementById("welcomeText"),
   userMeta: document.getElementById("userMeta"),
@@ -88,6 +89,8 @@ const el = {
   ticketAttachment: document.getElementById("ticketAttachment"),
   ticketSearch: document.getElementById("ticketSearch"),
   ticketSenderSearch: document.getElementById("ticketSenderSearch"),
+  ticketGroupSelect: document.getElementById("ticketGroupSelect"),
+  accompGroupSelect: document.getElementById("accompGroupSelect"),
   printUserTicketsBtn: document.getElementById("printUserTicketsBtn"),
   ticketsTableBody: document.getElementById("ticketsTableBody"),
   accomplishmentForm: document.getElementById("accomplishmentForm"),
@@ -96,6 +99,7 @@ const el = {
   accompActivity: document.getElementById("accompActivity"),
   accompFile: document.getElementById("accompFile"),
   accomplishmentTableBody: document.getElementById("accomplishmentTableBody"),
+  adminGroupSelect: document.getElementById("adminGroupSelect"),
   adminLogsSection: document.getElementById("adminLogsSection"),
   adminDepartmentFilter: document.getElementById("adminDepartmentFilter"),
   adminNameFilter: document.getElementById("adminNameFilter"),
@@ -227,6 +231,8 @@ function bindEvents() {
   if (el.openTicketEntryBtn) el.openTicketEntryBtn.addEventListener("click", () => el.ticketEntryModal.showModal());
   if (el.openAccompEntryBtn) el.openAccompEntryBtn.addEventListener("click", () => el.accompEntryModal.showModal());
 
+  if (el.employeeSearchInput) el.employeeSearchInput.addEventListener("input", initMessenger);
+
   el.openAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.showModal());
   el.openAnnouncementModalIconBtn.addEventListener("click", () => el.announcementModal.showModal());
   el.closeAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.close());
@@ -315,6 +321,9 @@ function bindEvents() {
 
   el.ticketSearch.addEventListener("input", renderTickets);
   el.ticketSenderSearch.addEventListener("input", renderTickets);
+  if (el.ticketGroupSelect) el.ticketGroupSelect.addEventListener("change", renderTickets);
+  if (el.accompGroupSelect) el.accompGroupSelect.addEventListener("change", renderAccomplishments);
+  if (el.adminGroupSelect) el.adminGroupSelect.addEventListener("change", renderAdminLogs);
   el.printUserTicketsBtn.addEventListener("click", () => printTable("QUEUED TICKETS", el.ticketsTableBody));
 
   el.closeTicketModal.addEventListener("click", () => el.ticketModal.close());
@@ -453,6 +462,16 @@ function setAdminTab(tab) {
   applyPageKindLayout();
 }
 
+function getGroupedData(items, groupKey) {
+  if (!groupKey) return { "": items };
+  return items.reduce((acc, item) => {
+    const val = item[groupKey] || "Unassigned";
+    if (!acc[val]) acc[val] = [];
+    acc[val].push(item);
+    return acc;
+  }, {});
+}
+
 function bindPanelLauncher(trigger, modal, panelKey) {
   if (!trigger || !modal) return;
   const pageKind = document.body.dataset.pageKind || "dashboard";
@@ -550,10 +569,15 @@ function applyAdminTabVisibility() {
 }
 
 function initMessenger() {
-  const users = getUniqueChatUsers(getUsers());
+  let users = getUniqueChatUsers(getUsers());
   const previousActiveChatUserId = state.activeChatUserId;
   el.chatEmployeeSelect.innerHTML = "";
   el.employeeNameList.innerHTML = "";
+
+  if (el.employeeSearchInput) {
+    const filter = el.employeeSearchInput.value.toLowerCase();
+    users = users.filter(u => u.fullname.toLowerCase().includes(filter) || (u.employeeCode || "").toLowerCase().includes(filter));
+  }
 
   if (!users.length) {
     el.chatEmployeeSelect.innerHTML = `<option value="">No employee available</option>`;
@@ -1205,42 +1229,53 @@ function visibleTickets() {
 function renderTickets() {
   const tickets = visibleTickets().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   el.ticketsTableBody.innerHTML = "";
+  const groupKey = el.ticketGroupSelect ? el.ticketGroupSelect.value : "";
+  const groups = getGroupedData(tickets, groupKey);
 
   if (!tickets.length) {
-    el.ticketsTableBody.innerHTML = `<tr><td colspan="6">No tickets found.</td></tr>`;
+    el.ticketsTableBody.innerHTML = `<tr><td colspan="7">No tickets found.</td></tr>`;
     return;
   }
 
-  tickets.forEach((ticket) => {
-    const progress = computeProgress(ticket);
-    const displayStatus = ticket.status === "approved" || progress === 100 ? "Completed" : ticket.status;
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${ticket.ticketNumber}</td>
-      <td>${escapeHtml(ticket.subject)}</td>
-      <td><div class="deadline-progress-wrap"><progress value="${progress}" max="100"></progress><span>${progress}%</span></div></td>
-      <td><span class="status-badge status-${ticket.status}">${displayStatus}</span></td>
-      <td>${escapeHtml(ticket.signatoryName || "-")}</td>
-      <td>${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
-      <td></td>
-    `;
-
-    const actions = row.lastElementChild;
-    actions.appendChild(makeAction("👁️", () => openTicketModal(ticket.id), false, "View Details"));
-
-    if (state.currentUser.role === "admin") {
-      actions.appendChild(makeAction("🕒", () => setTicketStatus(ticket.id, "pending"), ticket.status === "pending", "Set Pending"));
-      actions.appendChild(makeAction("📥", () => setTicketStatus(ticket.id, "queued"), ticket.status === "queued", "Set Queued"));
-      actions.appendChild(makeAction("✅", () => setTicketStatus(ticket.id, "approved"), ticket.status === "approved", "Approve / Complete"));
+  for (const [groupName, groupItems] of Object.entries(groups)) {
+    if (groupKey && groupName) {
+      const headRow = document.createElement("tr");
+      headRow.className = "group-header-row";
+      headRow.innerHTML = `<td colspan="7">${groupName.toUpperCase()}</td>`;
+      el.ticketsTableBody.appendChild(headRow);
     }
 
-    const canDelete = state.currentUser.role === "admin" || ticket.employeeId === state.currentUser.id;
-    if (canDelete) {
-      actions.appendChild(makeAction("🗑️", () => deleteTicket(ticket.id), false, "Delete Ticket"));
-    }
+    groupItems.forEach((ticket) => {
+      const progress = computeProgress(ticket);
+      const displayStatus = ticket.status === "approved" || progress === 100 ? "Completed" : ticket.status;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${ticket.ticketNumber}</td>
+        <td>${escapeHtml(ticket.subject)}</td>
+        <td><div class="deadline-progress-wrap"><progress value="${progress}" max="100"></progress><span>${progress}%</span></div></td>
+        <td><span class="status-badge status-${ticket.status}">${displayStatus}</span></td>
+        <td>${escapeHtml(ticket.signatoryName || "-")}</td>
+        <td>${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
+        <td></td>
+      `;
 
-    el.ticketsTableBody.appendChild(row);
-  });
+      const actions = row.lastElementChild;
+      actions.appendChild(makeAction("👁️", () => openTicketModal(ticket.id), false, "View Details"));
+
+      if (state.currentUser.role === "admin") {
+        actions.appendChild(makeAction("🕒", () => setTicketStatus(ticket.id, "pending"), ticket.status === "pending", "Set Pending"));
+        actions.appendChild(makeAction("📥", () => setTicketStatus(ticket.id, "queued"), ticket.status === "queued", "Set Queued"));
+        actions.appendChild(makeAction("✅", () => setTicketStatus(ticket.id, "approved"), ticket.status === "approved", "Approve / Complete"));
+      }
+
+      const canDelete = state.currentUser.role === "admin" || ticket.employeeId === state.currentUser.id;
+      if (canDelete) {
+        actions.appendChild(makeAction("🗑️", () => deleteTicket(ticket.id), false, "Delete Ticket"));
+      }
+
+      el.ticketsTableBody.appendChild(row);
+    });
+  }
 }
 
 function makeAction(icon, handler, disabled = false, title = "") {
@@ -1853,21 +1888,32 @@ function renderAccomplishments() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   el.accomplishmentTableBody.innerHTML = "";
+  const groupKey = el.accompGroupSelect ? el.accompGroupSelect.value : "";
+  const groups = getGroupedData(reports, groupKey);
+
   if (!reports.length) {
     el.accomplishmentTableBody.innerHTML = `<tr><td colspan="4">No accomplishment report submitted.</td></tr>`;
     return;
   }
 
-  reports.forEach((report) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${escapeHtml(formatDisplayName(report.employeeName))}</td>
-      <td>${escapeHtml(report.date)}</td>
-      <td>${escapeHtml(report.activity)}</td>
-      <td><a href="${report.attachment}" download="${escapeHtml(report.attachmentName || "file")}">View file</a></td>
-    `;
-    el.accomplishmentTableBody.appendChild(row);
-  });
+  for (const [groupName, groupItems] of Object.entries(groups)) {
+    if (groupKey && groupName) {
+      const headRow = document.createElement("tr");
+      headRow.className = "group-header-row";
+      headRow.innerHTML = `<td colspan="4">${groupName.toUpperCase()}</td>`;
+      el.accomplishmentTableBody.appendChild(headRow);
+    }
+    groupItems.forEach((report) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${escapeHtml(formatDisplayName(report.employeeName))}</td>
+        <td>${escapeHtml(report.date)}</td>
+        <td>${escapeHtml(report.activity)}</td>
+        <td><a href="${report.attachment}" download="${escapeHtml(report.attachmentName || "file")}">View file</a></td>
+      `;
+      el.accomplishmentTableBody.appendChild(row);
+    });
+  }
 }
 
 function renderAdminLogs() {
@@ -1899,24 +1945,35 @@ function renderAdminScheduleLogs() {
     .sort((a, b) => b.date.localeCompare(a.date));
   el.adminScheduleTableBody.innerHTML = "";
 
+  const groupKey = el.adminGroupSelect ? el.adminGroupSelect.value : "";
+  const groups = getGroupedData(events, groupKey);
+
   if (!events.length) {
     el.adminScheduleTableBody.innerHTML = `<tr><td colspan="6">NO SCHEDULE LOGS YET.</td></tr>`;
     return;
   }
 
-  events.forEach((event) => {
-    const owner = userMap.get(event.ownerId);
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${escapeHtml(formatDisplayName(event.ownerName || "-"))}</td>
-      <td>${escapeHtml(owner?.department || "-")}</td>
-      <td>${escapeHtml(event.date || "-")}</td>
-      <td>${escapeHtml(event.title || "-")}</td>
-      <td>${escapeHtml(event.cityAssigned || "-")}</td>
-      <td>${escapeHtml(normalizeScheduleStatus(event.status))}</td>
-    `;
-    el.adminScheduleTableBody.appendChild(row);
-  });
+  for (const [groupName, groupItems] of Object.entries(groups)) {
+    if (groupKey && groupName) {
+      const headRow = document.createElement("tr");
+      headRow.className = "group-header-row";
+      headRow.innerHTML = `<td colspan="6">${groupName.toUpperCase()}</td>`;
+      el.adminScheduleTableBody.appendChild(headRow);
+    }
+    groupItems.forEach((event) => {
+      const owner = userMap.get(event.ownerId);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${escapeHtml(formatDisplayName(event.ownerName || "-"))}</td>
+        <td>${escapeHtml(owner?.department || "-")}</td>
+        <td>${escapeHtml(event.date || "-")}</td>
+        <td>${escapeHtml(event.title || "-")}</td>
+        <td>${escapeHtml(event.cityAssigned || "-")}</td>
+        <td>${escapeHtml(normalizeScheduleStatus(event.status))}</td>
+      `;
+      el.adminScheduleTableBody.appendChild(row);
+    });
+  }
 }
 
 function renderAdminTicketLogs() {

@@ -47,6 +47,7 @@
         <button id="logoutBtn" class="left-tab-btn logout-text-btn" type="button"><span>Logout</span></button>
       </div>
       <div class="employee-nav-title">Employees</div>
+      <input id="employeeSearchInput" type="text" placeholder="Search employees..." class="sidebar-search" />
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
@@ -120,6 +121,11 @@
         <div class="status-filters">
           <input id="ticketSearch" type="text" placeholder="Search ticket #/subject/status/signatory" />
           <input id="ticketSenderSearch" type="text" placeholder="Search sender name" />
+          <select id="ticketGroupSelect">
+            <option value="">No Grouping</option>
+            <option value="status">Group by Status</option>
+            <option value="signatoryName">Group by Signatory</option>
+          </select>
         </div>
         <button id="printUserTicketsBtn" class="btn tiny secondary" type="button">Print</button>
       </div>
@@ -139,6 +145,10 @@
         <div class="calendar-nav">
           <button id="openAccompEntryBtn" class="btn tiny primary">Submit New Report</button>
           <button id="closeAccompPanelBtn" class="btn tiny ghost" type="button">Close</button>
+          <select id="accompGroupSelect">
+            <option value="">No Grouping</option>
+            <option value="date">Group by Date</option>
+          </select>
         </div>
       </div>
       <div class="table-wrap">
@@ -159,6 +169,11 @@
       <div class="status-filters">
         <select id="adminDepartmentFilter"><option value="">All departments</option></select>
         <input id="adminNameFilter" type="text" placeholder="Filter by name (Last, First, M.)" />
+        <select id="adminGroupSelect">
+          <option value="">No Grouping</option>
+          <option value="department">Group by Department</option>
+          <option value="status">Group by Status</option>
+        </select>
       </div>
       <div class="log-tabs">
         <button id="tabScheduleBtn" class="btn tiny active-tab" type="button">Schedules</button>
