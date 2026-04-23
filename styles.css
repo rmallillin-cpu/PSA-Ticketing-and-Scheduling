@@ -302,6 +302,7 @@ textarea:focus {
   color: #ffffff; /* White text for contrast */
   border-bottom: 3px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 4px 12px rgba(0, 56, 168, 0.15); /* Modern lift shadow */
 }
 
 .social-topbar {
@@ -309,7 +310,6 @@ textarea:focus {
   position: relative;
   top: 0;
   z-index: 50;
-  box-shadow: 0 4px 12px rgba(0, 56, 168, 0.15);
 }
 
 .psa-top-logo {
@@ -352,7 +352,7 @@ textarea:focus {
 }
 
 .topbar-brand-text h3 {
-  font-size: 1.15rem;
+  font-size: 1.15rem; /* Increased for professional hierarchy */
   font-weight: 700;
   color: #ffffff;
 }
@@ -406,7 +406,7 @@ textarea:focus {
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Responsive grid wrapping */
   gap: 20px;
   padding: 20px;
   margin-bottom: 20px;
