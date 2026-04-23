@@ -165,7 +165,12 @@ async function startDashboard() {
   forceCloudStatusResolution();
   
   // Initialize UI with local data immediately
-  initDashboard(); 
+  initDashboard();
+
+  // Ensure rendering happens on next frame to ensure DOM is ready
+  requestAnimationFrame(() => {
+    renderAllData();
+  });
 
   // Attempt cloud sync and refresh UI regardless of outcome
   try {
