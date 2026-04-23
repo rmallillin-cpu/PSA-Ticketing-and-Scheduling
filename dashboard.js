@@ -468,24 +468,41 @@ function applyPageKindLayout() {
     el.announcementFeed.parentElement.classList.toggle("hidden", !isDashboard);
   }
 
-  if (pageKind === "calendar") {
-    mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
-  }
-  if (pageKind === "ticket") {
-    mountStandalonePanel(el.ticketPanelModal, el.closeTicketPanelBtn);
-  }
-  if (pageKind === "accomplishment") {
-    mountStandalonePanel(el.accompPanelModal, el.closeAccompPanelBtn);
-  }
-  if (pageKind === "admin-logs") {
-    mountStandalonePanel(el.adminLogsPanelModal, el.closeAdminLogsPanelBtn);
-  }
+  if (pageKind === "calendar") mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
+  if (pageKind === "ticket") mountStandalonePanel(el.ticketPanelModal, el.closeTicketPanelBtn);
+  if (pageKind === "accomplishment") mountStandalonePanel(el.accompPanelModal, el.closeAccompPanelBtn);
+  if (pageKind === "admin-logs") mountStandalonePanel(el.adminLogsPanelModal, el.closeAdminLogsPanelBtn);
 }
 
 function mountStandalonePanel(modal, closeBtn) {
   if (!modal) return;
-  modal.classList.add("standalone-panel");
-  modal.setAttribute("open", "open");
+  const pageKind = document.body.dataset.pageKind || "dashboard";
+  if (pageKind === "dashboard") return;
+
+  const body = modal.querySelector(".modal-body");
+  if (!body) return;
+
+  let host = document.getElementById("pageModuleHost");
+  if (!host) {
+    host = document.createElement("section");
+    host.id = "pageModuleHost";
+    host.className = "card announcement-section social-feed module-page-host";
+    const shell = document.querySelector(".social-shell");
+    const aside = document.querySelector(".employee-corner");
+    if (shell && aside) {
+      shell.insertBefore(host, aside.nextSibling);
+    } else {
+      document.body.appendChild(host);
+    }
+  }
+
+  if (!host.contains(body)) {
+    host.innerHTML = "";
+    host.appendChild(body);
+  }
+
+  modal.classList.add("hidden");
+  modal.removeAttribute("open");
   if (closeBtn) closeBtn.classList.add("hidden");
 }
 

@@ -1236,6 +1236,11 @@ th {
   box-shadow: var(--shadow);
 }
 
+.module-page-host {
+  width: calc(100% - (320px + 0.7in));
+  margin: 0;
+}
+
 .calendar-view-modal-body {
   gap: 12px;
 }
@@ -1396,6 +1401,10 @@ th {
   }
 
   .standalone-panel {
+    width: 100%;
+  }
+
+  .module-page-host {
     width: 100%;
   }
 }
