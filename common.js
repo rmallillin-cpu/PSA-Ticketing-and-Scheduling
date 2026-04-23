@@ -287,12 +287,16 @@ function notify(message, type = "") {
 function formatDisplayName(fullname) {
   const clean = String(fullname || "").trim().replace(/\s+/g, " ");
   if (!clean) return "-";
+  const toTitleCase = (str) => str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  
   const parts = clean.split(" ");
-  if (parts.length === 1) return parts[0].toUpperCase();
-  const first = parts[0];
-  const last = parts[parts.length - 1];
-  const middle = parts.length > 2 ? `${parts[1][0] || ""}.` : "";
-  return `${last.toUpperCase()}, ${first.toUpperCase()}${middle ? `, ${middle.toUpperCase()}` : ""}`;
+  const formattedParts = parts.map(p => toTitleCase(p));
+
+  if (formattedParts.length === 1) return formattedParts[0];
+  const first = formattedParts[0];
+  const last = formattedParts[formattedParts.length - 1];
+  const middle = formattedParts.length > 2 ? `${formattedParts[1][0]}.` : "";
+  return `${last}, ${first}${middle ? ` ${middle}` : ""}`;
 }
 
 async function bootstrapCloudState() {

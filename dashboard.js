@@ -37,6 +37,10 @@ const el = {
   openAccompPanelBtn: document.getElementById("openAccompPanelBtn"),
   openAdminLogsPanelBtn: document.getElementById("openAdminLogsPanelBtn"),
   calendarPanelModal: document.getElementById("calendarPanelModal"),
+  openTicketEntryBtn: document.getElementById("openTicketEntryBtn"),
+  ticketEntryModal: document.getElementById("ticketEntryModal"),
+  openAccompEntryBtn: document.getElementById("openAccompEntryBtn"),
+  accompEntryModal: document.getElementById("accompEntryModal"),
   ticketPanelModal: document.getElementById("ticketPanelModal"),
   accompPanelModal: document.getElementById("accompPanelModal"),
   adminLogsPanelModal: document.getElementById("adminLogsPanelModal"),
@@ -219,6 +223,10 @@ function bindEvents() {
   el.closeTicketPanelBtn.addEventListener("click", () => el.ticketPanelModal.close());
   el.closeAccompPanelBtn.addEventListener("click", () => el.accompPanelModal.close());
   el.closeAdminLogsPanelBtn.addEventListener("click", () => el.adminLogsPanelModal.close());
+  
+  if (el.openTicketEntryBtn) el.openTicketEntryBtn.addEventListener("click", () => el.ticketEntryModal.showModal());
+  if (el.openAccompEntryBtn) el.openAccompEntryBtn.addEventListener("click", () => el.accompEntryModal.showModal());
+
   el.openAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.showModal());
   el.openAnnouncementModalIconBtn.addEventListener("click", () => el.announcementModal.showModal());
   el.closeAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.close());
@@ -1162,6 +1170,7 @@ async function createTicket() {
 
   tickets.push(ticket);
   setTickets(tickets);
+  if (el.ticketEntryModal) el.ticketEntryModal.close();
   incrementTicketCounter();
   createSystemAnnouncement({
     message: `TICKET SUBMITTED: ${ticket.ticketNumber} - ${ticket.subject}`,
@@ -1434,6 +1443,7 @@ async function submitAccomplishment() {
   });
 
   setAccomplishments(reports);
+  if (el.accompEntryModal) el.accompEntryModal.close();
   createSystemAnnouncement({
     message: `ACCOMPLISHMENT REPORT SUBMITTED: ${el.accompActivity.value.trim()} (${el.accompDate.value})`,
     attachment: reports[reports.length - 1].attachment,
