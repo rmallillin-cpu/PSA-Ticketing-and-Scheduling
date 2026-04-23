@@ -144,6 +144,8 @@ const el = {
 startDashboard();
 
 async function startDashboard() {
+  applyPageKindLayout(); // Initialize layout immediately before async calls
+  highlightActiveTab();  // Show which page we are on
   await bootstrapCloudState();
   initDashboard();
   startCloudPolling(() => {
@@ -455,6 +457,17 @@ function bindPanelLauncher(trigger, modal, panelKey) {
   trigger.addEventListener("click", () => modal.showModal());
 }
 
+function highlightActiveTab() {
+  const pageKind = document.body.dataset.pageKind || "dashboard";
+  const links = document.querySelectorAll(".left-tab-btn");
+  links.forEach(link => {
+    const href = link.getAttribute("href");
+    if (href && href.includes(pageKind)) {
+      link.classList.add("active-tab-btn");
+    }
+  });
+}
+
 function applyPageKindLayout() {
   const pageKind = document.body.dataset.pageKind || "dashboard";
   const isDashboard = pageKind === "dashboard";
@@ -465,8 +478,10 @@ function applyPageKindLayout() {
   if (el.openAnnouncementModalIconBtn) {
     el.openAnnouncementModalIconBtn.classList.toggle("hidden", !isDashboard);
   }
-  if (el.announcementFeed?.parentElement) {
-    el.announcementFeed.parentElement.classList.toggle("hidden", !isDashboard);
+  
+  const mainFeedSection = document.querySelector(".announcement-section");
+  if (mainFeedSection) {
+    mainFeedSection.classList.toggle("hidden", !isDashboard);
   }
 
   if (pageKind === "calendar") mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
@@ -487,7 +502,7 @@ function mountStandalonePanel(modal, closeBtn) {
   if (!host) {
     host = document.createElement("section");
     host.id = "pageModuleHost";
-    host.className = "card announcement-section social-feed module-page-host";
+    host.className = "card module-page-host redesign-clean-card";
     const shell = document.querySelector(".social-shell");
     const aside = document.querySelector(".employee-corner");
     if (shell && aside) {
@@ -501,6 +516,10 @@ function mountStandalonePanel(modal, closeBtn) {
     host.innerHTML = "";
     host.appendChild(body);
   }
+
+  // Ensure the body is visible even if the modal was hidden
+  body.classList.remove("hidden");
+  body.style.display = "block";
 
   modal.classList.add("hidden");
   modal.removeAttribute("open");
