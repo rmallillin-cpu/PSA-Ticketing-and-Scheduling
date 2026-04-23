@@ -708,6 +708,14 @@ body[data-page-kind="dashboard"] a[href="dashboard.html"] {
 }
 
 .announcement-section,
+.calendar-section,
+.ticket-section,
+.accomplishment-section,
+.admin-logs-section {
+  min-height: calc(100vh - 150px);
+}
+
+.announcement-section,
 .module-page {
   border-radius: var(--radius);
 }
@@ -722,6 +730,16 @@ body[data-page-kind="dashboard"] a[href="dashboard.html"] {
 .admin-logs-section > .stats-row,
 .admin-logs-section > .log-panel {
   width: 100%;
+}
+
+.accomplishment-section,
+.admin-logs-section {
+  justify-content: flex-start;
+}
+
+.accomplishment-section .table-wrap,
+.admin-logs-section .table-wrap {
+  flex: 1 1 auto;
 }
 
 .module-heading {

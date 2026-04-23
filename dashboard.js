@@ -916,6 +916,28 @@ function getUniqueChatUsers(users) {
   return Array.from(map.values()).sort((a, b) => formatDisplayName(a.fullname).localeCompare(formatDisplayName(b.fullname)));
 }
 
+function checkUserOnline(userId) {
+  if (!userId) return false;
+
+  const currentUser = state.currentUser;
+  if (currentUser?.id === userId) return true;
+
+  const activeSession = getSession();
+  if (activeSession?.userId === userId) return true;
+
+  const latestOpenAttendance = getAttendance()
+    .filter((entry) => entry.userId === userId && !entry.timeOut)
+    .sort((a, b) => String(b.timeIn || "").localeCompare(String(a.timeIn || "")))[0];
+
+  if (!latestOpenAttendance?.timeIn) return false;
+
+  const activeSince = new Date(latestOpenAttendance.timeIn).getTime();
+  if (!Number.isFinite(activeSince)) return false;
+
+  const twelveHours = 12 * 60 * 60 * 1000;
+  return Date.now() - activeSince < twelveHours;
+}
+
 function findUserByToken(token) {
   const normalized = normalizeToken(token);
   return getUsers().find((user) => {
