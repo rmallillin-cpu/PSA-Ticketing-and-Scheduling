@@ -1161,6 +1161,12 @@ td {
   border-bottom: 1px solid #f1f5f9;
 }
 
+.daily-schedule-container {
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 2px dashed var(--line);
+}
+
 .group-header-row td {
   background-color: #f1f5f9;
   color: #475569;

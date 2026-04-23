@@ -112,6 +112,9 @@ const el = {
   printScheduleLogBtn: document.getElementById("printScheduleLogBtn"),
   printTicketLogBtn: document.getElementById("printTicketLogBtn"),
   printAccompLogBtn: document.getElementById("printAccompLogBtn"),
+  dailyScheduleContainer: document.getElementById("dailyScheduleContainer"),
+  selectedScheduleDate: document.getElementById("selectedScheduleDate"),
+  dailyScheduleTableBody: document.getElementById("dailyScheduleTableBody"),
   adminScheduleTableBody: document.getElementById("adminScheduleTableBody"),
   adminTicketsTableBody: document.getElementById("adminTicketsTableBody"),
   adminAccomplishmentTableBody: document.getElementById("adminAccomplishmentTableBody"),
@@ -1087,8 +1090,54 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
     }
 
     cell.addEventListener("click", () => openEventModal(key));
+    cell.addEventListener("mouseenter", () => renderDailyScheduleTable(key));
     targetGrid.appendChild(cell);
   }
+}
+
+function renderDailyScheduleTable(dateKey) {
+  if (!el.dailyScheduleTableBody) return;
+
+  const events = getEvents().filter(e => e.date === dateKey);
+  const userMap = new Map(getUsers().map(u => [u.id, u]));
+  
+  el.selectedScheduleDate.textContent = dateKey;
+  el.dailyScheduleTableBody.innerHTML = "";
+
+  if (!events.length) {
+    el.dailyScheduleContainer.classList.add("hidden");
+    return;
+  }
+
+  el.dailyScheduleContainer.classList.remove("hidden");
+
+  // Group by department
+  const grouped = events.reduce((acc, ev) => {
+    const dept = userMap.get(ev.ownerId)?.department || "Other";
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(ev);
+    return acc;
+  }, {});
+
+  Object.keys(grouped).sort().forEach(dept => {
+    // Department Header Row
+    const headRow = document.createElement("tr");
+    headRow.className = "group-header-row";
+    headRow.innerHTML = `<td colspan="5">${dept.toUpperCase()}</td>`;
+    el.dailyScheduleTableBody.appendChild(headRow);
+
+    grouped[dept].forEach(ev => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${escapeHtml(formatDisplayName(ev.ownerName))}</td>
+        <td>${escapeHtml(dept)}</td>
+        <td>${escapeHtml(ev.title)}</td>
+        <td>${escapeHtml(ev.cityAssigned || "-")}</td>
+        <td><span class="status-badge status-${ev.status}">${normalizeScheduleStatus(ev.status)}</span></td>
+      `;
+      el.dailyScheduleTableBody.appendChild(row);
+    });
+  });
 }
 
 function openEventModal(dateKey) {
