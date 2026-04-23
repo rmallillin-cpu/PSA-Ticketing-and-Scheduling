@@ -627,10 +627,29 @@ function renderEmployeeNameList(users) {
     button.dataset.userId = user.id;
     button.dataset.userToken = token;
     button.dataset.username = String(user.username || "").toLowerCase();
-    button.innerHTML = `<span>${escapeHtml(formatDisplayName(user.fullname))}</span><i class=\"name-unread hidden\">0</i>`;
+    
+    const isOnline = checkUserOnline(user.id);
+    button.innerHTML = `
+      <div style="display:flex; align-items:center;">
+        <i class="status-dot ${isOnline ? 'online' : ''}"></i>
+        <span>${escapeHtml(formatDisplayName(user.fullname))}</span>
+      </div>
+      <i class="name-unread hidden">0</i>
+    `;
     button.addEventListener("click", () => openMessengerForUser(token));
     el.employeeNameList.appendChild(button);
   });
+}
+
+function checkUserOnline(userId) {
+  const attendance = getAttendance();
+  const today = new Date().toISOString().split('T')[0];
+  // Check if they timed in today and haven't timed out
+  return attendance.some(entry => 
+    entry.userId === userId && 
+    entry.timeIn.startsWith(today) && 
+    !entry.timeOut
+  );
 }
 
 function openMessengerForUser(userId) {
@@ -1898,18 +1917,18 @@ function getUnreadMessageCount(chats, userId, username) {
 }
 
 function playNotificationSound() {
+  // Prioritize the user's specific mp3
+  const soundPath = "logo/notification.mp3";
   const tryPlay = (index) => {
-    if (index >= NOTIFY_SOUND_CANDIDATES.length) {
-      playFallbackBeep();
-      return;
-    }
+    const path = index === -1 ? soundPath : NOTIFY_SOUND_CANDIDATES[index];
+    if (index >= NOTIFY_SOUND_CANDIDATES.length) { playFallbackBeep(); return; }
 
-    const audio = new Audio(NOTIFY_SOUND_CANDIDATES[index]);
+    const audio = new Audio(path);
     audio.volume = 0.75;
     audio.play().catch(() => tryPlay(index + 1));
   };
 
-  tryPlay(0);
+  tryPlay(-1);
 }
 
 function playFallbackBeep() {

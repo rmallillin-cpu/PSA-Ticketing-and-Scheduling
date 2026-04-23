@@ -435,7 +435,10 @@ async function pullCloudStateIfNewer() {
       return false;
     }
     const incoming = data.updated_at || "";
-    if (incoming && cloudUpdatedAt && incoming <= cloudUpdatedAt) return false;
+    
+    // If cloud is newer, pull it. If local is newer, we wait for the next push.
+    if (incoming && cloudUpdatedAt && incoming === cloudUpdatedAt) return false;
+    
     cloudUpdatedAt = incoming;
     hydrateLocalStorageFromCloud(data.data || {});
     cloudConnected = true;
