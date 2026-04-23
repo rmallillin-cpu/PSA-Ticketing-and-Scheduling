@@ -64,70 +64,76 @@ async function cloudFetch(pathAndQuery, options = {}, timeoutMs = 8000) {
 }
 
 async function cloudSelectPortalState(columns = "updated_at,data") {
-  if (supabaseClient) {
+  if (typeof fetch === "function") {
     try {
-      const { data, error } = await supabaseClient
-        .from(CLOUD_STATE_TABLE)
-        .select(columns)
-        .eq("id", CLOUD_STATE_ROW_ID)
-        .single();
-      if (error) throw new Error(error.message || "Cloud select failed.");
-      return data || null;
+      const response = await cloudFetch(
+        `${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`,
+        {
+          method: "GET",
+          cache: "no-store"
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+      }
+
+      const rows = await response.json();
+      return Array.isArray(rows) ? rows[0] || null : rows || null;
     } catch (error) {
-      if (typeof fetch !== "function") throw error;
+      if (!supabaseClient) throw error;
     }
   }
 
-  const response = await cloudFetch(
-    `${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`,
-    {
-      method: "GET",
-      cache: "no-store"
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .select(columns)
+      .eq("id", CLOUD_STATE_ROW_ID)
+      .single();
+    if (error) throw new Error(error.message || "Cloud select failed.");
+    return data || null;
   }
-
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows[0] || null : rows || null;
+  throw new Error(CLOUD_SETUP_HINT);
 }
 
 async function cloudUpsertPortalState(row, selectColumns = "") {
-  if (supabaseClient) {
+  if (typeof fetch === "function") {
     try {
-      let query = supabaseClient
-        .from(CLOUD_STATE_TABLE)
-        .upsert(row, { onConflict: "id" });
-      if (selectColumns) query = query.select(selectColumns).single();
-      const { data, error } = await query;
-      if (error) throw new Error(error.message || "Cloud upsert failed.");
-      return data || null;
+      const response = await cloudFetch(
+        `${CLOUD_STATE_TABLE}?on_conflict=id`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Prefer: `resolution=merge-duplicates,return=${selectColumns ? "representation" : "minimal"}`
+          },
+          body: JSON.stringify([row])
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+      }
+
+      if (!selectColumns) return null;
+      const rows = await response.json();
+      return Array.isArray(rows) ? rows[0] || null : rows || null;
     } catch (error) {
-      if (typeof fetch !== "function") throw error;
+      if (!supabaseClient) throw error;
     }
   }
 
-  const response = await cloudFetch(
-    `${CLOUD_STATE_TABLE}?on_conflict=id`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Prefer: `resolution=merge-duplicates,return=${selectColumns ? "representation" : "minimal"}`
-      },
-      body: JSON.stringify([row])
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+  if (supabaseClient) {
+    let query = supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .upsert(row, { onConflict: "id" });
+    if (selectColumns) query = query.select(selectColumns).single();
+    const { data, error } = await query;
+    if (error) throw new Error(error.message || "Cloud upsert failed.");
+    return data || null;
   }
-
-  if (!selectColumns) return null;
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows[0] || null : rows || null;
+  throw new Error(CLOUD_SETUP_HINT);
 }
 
 function getLocalPortalStateSnapshot() {

@@ -157,12 +157,23 @@ const el = {
   chatCurrentMeta: document.getElementById("chatCurrentMeta")
 };
 
-startDashboard();
+startDashboard().catch((error) => {
+  console.error("Dashboard startup error:", error);
+  if (el.cloudSyncStatus) {
+    el.cloudSyncStatus.textContent = "App error: reload page";
+    el.cloudSyncStatus.classList.remove("online");
+    el.cloudSyncStatus.classList.add("offline");
+  }
+  if (typeof notify === "function") {
+    notify("Page startup failed. Reload the page.", "error");
+  }
+});
 
 async function startDashboard() {
   // Initialize UI safely first
   highlightActiveTab();
   applyPageKindLayout();
+  renderCloudSyncStatus();
   
   // Initialize UI with local data immediately
   initDashboard();
@@ -174,7 +185,10 @@ async function startDashboard() {
 
   // Attempt cloud sync and refresh UI regardless of outcome
   try {
-    await bootstrapCloudState();
+    await Promise.race([
+      bootstrapCloudState(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Cloud startup timed out.")), 9000))
+    ]);
   } catch (err) {
     console.warn("Cloud bootstrap failed, continuing in local mode.", err);
   } finally {
@@ -299,11 +313,11 @@ function bindEvents() {
     el.closeAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.close());
   }
 
-  if (el.closeMessengerBtn) el.closeMessengerBtn.addEventListener("click", () => {
+  if (el.closeMessengerBtn && el.messengerModal) el.closeMessengerBtn.addEventListener("click", () => {
     el.messengerModal.close();
   });
 
-  el.logoutBtn.addEventListener("click", async () => {
+  if (el.logoutBtn) el.logoutBtn.addEventListener("click", async () => {
     const now = new Date();
     const timeOutText = now.toLocaleString();
     createSystemAnnouncement({
@@ -645,11 +659,13 @@ function applyAdminTabVisibility() {
 }
 
 function initMessenger() {
-  if (!el.chatEmployeeSelect || !el.employeeNameList || !el.chatThread || !el.chatForm) return;
+  if (!el.employeeNameList) return;
   let users = getUniqueChatUsers(getUsers());
   const previousActiveChatUserId = state.activeChatUserId;
-  el.chatEmployeeSelect.innerHTML = "";
   el.employeeNameList.innerHTML = "";
+  if (el.chatEmployeeSelect) {
+    el.chatEmployeeSelect.innerHTML = "";
+  }
 
   if (el.employeeSearchInput) {
     const filter = el.employeeSearchInput.value.toLowerCase();
@@ -657,39 +673,55 @@ function initMessenger() {
   }
 
   if (!users.length) {
-    el.chatEmployeeSelect.innerHTML = `<option value="">No employee available</option>`;
-    el.chatEmployeeSelect.disabled = true;
-    el.chatThread.innerHTML = "<p>No employee available for chat.</p>";
-    el.chatForm.classList.add("hidden");
+    if (el.chatEmployeeSelect) {
+      el.chatEmployeeSelect.innerHTML = `<option value="">No employee available</option>`;
+      el.chatEmployeeSelect.disabled = true;
+    }
+    if (el.chatThread) {
+      el.chatThread.innerHTML = "<p>No employee available for chat.</p>";
+    }
+    if (el.chatForm) {
+      el.chatForm.classList.add("hidden");
+    }
     renderChatRecipientSummary("");
     renderUnreadAlert();
     return;
   }
 
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = "Select employee";
-  placeholder.disabled = true;
-  placeholder.selected = true;
-  el.chatEmployeeSelect.appendChild(placeholder);
+  if (el.chatEmployeeSelect) {
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select employee";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    el.chatEmployeeSelect.appendChild(placeholder);
+  }
 
   users.forEach((user) => {
     const token = normalizeToken(user.username || user.id);
-    const option = document.createElement("option");
-    option.value = token;
-    option.textContent = `${formatDisplayName(user.fullname)} [${user.employeeCode || "-"}]`;
-    option.dataset.username = String(user.username || "").toLowerCase();
-    option.dataset.userId = user.id;
-    el.chatEmployeeSelect.appendChild(option);
+    if (el.chatEmployeeSelect) {
+      const option = document.createElement("option");
+      option.value = token;
+      option.textContent = `${formatDisplayName(user.fullname)} [${user.employeeCode || "-"}]`;
+      option.dataset.username = String(user.username || "").toLowerCase();
+      option.dataset.userId = user.id;
+      el.chatEmployeeSelect.appendChild(option);
+    }
   });
 
-  el.chatEmployeeSelect.disabled = false;
-  el.chatForm.classList.remove("hidden");
+  if (el.chatEmployeeSelect) {
+    el.chatEmployeeSelect.disabled = false;
+  }
+  if (el.chatForm) {
+    el.chatForm.classList.remove("hidden");
+  }
   const defaultChatUser = users.find((user) => normalizeToken(user.username || user.id) === normalizeToken(previousActiveChatUserId))
     || users.find((user) => user.id !== state.currentUser.id)
     || users[0];
   state.activeChatUserId = normalizeToken(defaultChatUser.username || defaultChatUser.id);
-  el.chatEmployeeSelect.value = state.activeChatUserId;
+  if (el.chatEmployeeSelect) {
+    el.chatEmployeeSelect.value = state.activeChatUserId;
+  }
   renderEmployeeNameList(users);
   if (state.activeChatUserId) markConversationAsRead(state.activeChatUserId);
   renderChatRecipientSummary(state.activeChatUserId);
