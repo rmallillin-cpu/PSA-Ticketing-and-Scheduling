@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260423f" />
+  <link rel="stylesheet" href="styles.css?v=20260423g" />
 </head>
 <body>
   <div id="toastContainer" class="toast-container"></div>
@@ -22,30 +22,28 @@
           <h3>Philippine Statistics Authority</h3>
           <p>Cavite Profile</p>
         </div>
+        <div class="topbar-profile">
+          <img id="announceAvatar" src="" alt="Profile" class="avatar topbar-avatar" />
+          <div>
+            <h3 id="welcomeText">Welcome</h3>
+            <p id="userMeta"></p>
+            <p id="timeInStatus" class="time-in-status"></p>
+            <p id="cloudSyncStatus" class="cloud-sync-status">Cloud sync: checking...</p>
+          </div>
+        </div>
       </div>
-      <div class="topbar-actions nav-actions">
+      <div class="topbar-center">
         <div class="header-search"><input id="globalSearchInput" type="text" placeholder="Search posts, department, or employee" /></div>
-        <button id="logoutBtn" class="btn icon-btn" type="button" title="Logout">
-          <img src="logo/logout.png" alt="Logout" class="btn-icon-img" />
-        </button>
       </div>
     </header>
 
     <aside class="card employee-corner">
-      <div class="profile-mini">
-        <img id="announceAvatar" src="" alt="Profile" class="avatar profile-avatar-large" />
-        <div>
-          <h3 id="welcomeText">Welcome</h3>
-          <p id="userMeta"></p>
-          <p id="timeInStatus" class="time-in-status"></p>
-          <p id="cloudSyncStatus" class="cloud-sync-status">Cloud sync: checking...</p>
-        </div>
-      </div>
       <div class="left-tabs">
         <button id="openCalendarPanelBtn" class="left-tab-btn" type="button"><img src="logo/calendar.png" alt="Calendar" class="menu-icon" /> <span>Calendar</span></button>
         <button id="openTicketPanelBtn" class="left-tab-btn" type="button"><img src="logo/ticket.png" alt="Ticket" class="menu-icon" /> <span>Ticket</span></button>
         <button id="openAccompPanelBtn" class="left-tab-btn" type="button"><img src="logo/accomplishment report.png" alt="Accomplishment report" class="menu-icon" /> <span>Accomplishment report</span></button>
         <button id="openAdminLogsPanelBtn" class="left-tab-btn hidden" type="button"><img src="logo/log.png" alt="Admin logs" class="menu-icon" /> <span>Admin logs</span></button>
+        <button id="logoutBtn" class="left-tab-btn logout-text-btn" type="button"><span>Logout</span></button>
       </div>
       <div class="employee-nav-title">Employees</div>
       <div id="employeeNameList" class="employee-name-list"></div>
@@ -260,7 +258,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="common.js?v=20260423f"></script>
-  <script src="dashboard.js?v=20260423f"></script>
+  <script src="common.js?v=20260423g"></script>
+  <script src="dashboard.js?v=20260423g"></script>
 </body>
 </html>

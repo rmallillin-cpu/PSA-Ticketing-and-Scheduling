@@ -311,9 +311,10 @@ textarea:focus {
 .topbar {
   padding: 8px 12px;
   margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  column-gap: 10px;
 }
 
 .social-topbar {
@@ -334,20 +335,25 @@ textarea:focus {
 }
 
 .header-search input {
-  width: 320px;
+  width: 360px;
   border-radius: 999px;
 }
 
 .topbar-left {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.topbar-center {
+  grid-column: 2;
 }
 
 .topbar-brand-text h3 {
@@ -357,6 +363,30 @@ textarea:focus {
 
 .topbar-brand-text p {
   color: var(--muted);
+}
+
+.topbar-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.topbar-profile h3 {
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.topbar-profile p {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.topbar-avatar {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  min-height: 54px;
 }
 
 .nav-actions {
@@ -424,7 +454,7 @@ textarea:focus {
 
 .employee-corner {
   position: fixed;
-  top: 142px;
+  top: 94px;
   right: 14px;
   width: calc(290px + 0.5in);
   max-height: 72vh;
@@ -520,6 +550,11 @@ textarea:focus {
 
 .left-tab-btn:hover {
   background: rgba(23, 120, 242, 0.12);
+}
+
+.logout-text-btn {
+  justify-content: center;
+  font-weight: 700;
 }
 
 .employee-name-list {
@@ -1309,6 +1344,20 @@ th {
     width: 100%;
     max-height: none;
     margin-top: 8px;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .topbar-center {
+    grid-column: auto;
+  }
+
+  .header-search input {
+    width: 100%;
+    max-width: 520px;
   }
 
   .social-shell {
