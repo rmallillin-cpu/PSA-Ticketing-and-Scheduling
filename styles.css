@@ -1055,11 +1055,24 @@ textarea:focus {
   gap: 6px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  align-items: stretch;
 }
 
 .log-tabs .btn {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.55);
+  width: auto;
+  min-width: 1.1in;
+  height: auto;
+  min-height: 0.3in;
+  padding: 6px 10px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .log-tabs .active-tab {

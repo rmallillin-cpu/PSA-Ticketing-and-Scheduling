@@ -535,6 +535,59 @@ function getLegacyConversationKey(userA, userB) {
   return [String(userA || "").trim(), String(userB || "").trim()].sort().join("__");
 }
 
+function normalizeToken(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getConversationTokenSet(userId, fallbackUsername = "") {
+  const users = getUsers();
+  const set = new Set();
+  const normalizedId = normalizeToken(userId);
+  if (normalizedId) set.add(normalizedId);
+
+  const user = users.find((item) => item.id === userId);
+  const username = normalizeToken(fallbackUsername || user?.username);
+  if (username) {
+    set.add(username);
+    users.forEach((item) => {
+      if (normalizeToken(item.username) === username) {
+        const userToken = normalizeToken(item.id);
+        if (userToken) set.add(userToken);
+      }
+    });
+  }
+
+  return set;
+}
+
+function keyBelongsToConversation(conversationKey, myTokens, otherTokens) {
+  const parts = String(conversationKey || "")
+    .split("__")
+    .map((part) => normalizeToken(part))
+    .filter(Boolean);
+  if (!parts.length) return false;
+  const hasMine = parts.some((part) => myTokens.has(part));
+  const hasOther = parts.some((part) => otherTokens.has(part));
+  return hasMine && hasOther;
+}
+
+function isMessageBetweenUsers(message, myTokens, otherTokens) {
+  const senderTokens = [
+    normalizeToken(message?.senderId),
+    normalizeToken(message?.senderUsername)
+  ].filter(Boolean);
+  const receiverTokens = [
+    normalizeToken(message?.receiverId),
+    normalizeToken(message?.receiverUsername)
+  ].filter(Boolean);
+
+  const mineToOther = senderTokens.some((token) => myTokens.has(token))
+    && receiverTokens.some((token) => otherTokens.has(token));
+  const otherToMine = senderTokens.some((token) => otherTokens.has(token))
+    && receiverTokens.some((token) => myTokens.has(token));
+  return mineToOther || otherToMine;
+}
+
 function mergeMessagesById(items) {
   if (!Array.isArray(items) || !items.length) return [];
   const byId = new Map();
@@ -564,23 +617,45 @@ function getConversationKey(userA, userB) {
 
 function getConversationMessages(otherUserId) {
   const chats = getChats();
-  const key = getConversationKey(state.currentUser.id, otherUserId);
-  const legacyKey = getLegacyConversationKey(state.currentUser.id, otherUserId);
-  const merged = mergeMessagesById([
-    ...(Array.isArray(chats[key]) ? chats[key] : []),
-    ...(Array.isArray(chats[legacyKey]) ? chats[legacyKey] : [])
-  ]);
+  const otherUser = getUsers().find((user) => user.id === otherUserId);
+  const myTokens = getConversationTokenSet(state.currentUser.id, state.currentUser.username);
+  const otherTokens = getConversationTokenSet(otherUserId, otherUser?.username);
+  const bucket = [];
+
+  Object.entries(chats).forEach(([conversationKey, messages]) => {
+    if (!Array.isArray(messages)) return;
+    if (keyBelongsToConversation(conversationKey, myTokens, otherTokens)) {
+      bucket.push(...messages);
+      return;
+    }
+    messages.forEach((message) => {
+      if (isMessageBetweenUsers(message, myTokens, otherTokens)) {
+        bucket.push(message);
+      }
+    });
+  });
+
+  const merged = mergeMessagesById(bucket);
   return merged.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
 }
 
 function setConversationMessages(otherUserId, messages) {
   const chats = getChats();
-  const key = getConversationKey(state.currentUser.id, otherUserId);
-  const legacyKey = getLegacyConversationKey(state.currentUser.id, otherUserId);
+  const otherUser = getUsers().find((user) => user.id === otherUserId);
+  const myToken = normalizeToken(state.currentUser.username || state.currentUser.id);
+  const otherToken = normalizeToken(otherUser?.username || otherUserId);
+  const key = [myToken, otherToken].sort().join("__");
+  const myTokens = getConversationTokenSet(state.currentUser.id, state.currentUser.username);
+  const otherTokens = getConversationTokenSet(otherUserId, otherUser?.username);
+
   chats[key] = messages;
-  if (legacyKey !== key && chats[legacyKey]) {
-    delete chats[legacyKey];
-  }
+  Object.keys(chats).forEach((conversationKey) => {
+    if (conversationKey === key) return;
+    if (keyBelongsToConversation(conversationKey, myTokens, otherTokens)) {
+      delete chats[conversationKey];
+    }
+  });
+
   setChats(chats);
 }
 
@@ -658,7 +733,8 @@ function renderChatThread() {
 
   messages.forEach((message) => {
     const item = document.createElement("article");
-    const mine = message.senderId === state.currentUser.id;
+    const mine = message.senderId === state.currentUser.id
+      || normalizeToken(message.senderUsername) === normalizeToken(state.currentUser.username);
     item.className = `chat-message ${mine ? "mine" : "theirs"}`;
     const hasImage = String(message.attachmentType || "").startsWith("image/");
     const topRow = document.createElement("div");
@@ -785,10 +861,14 @@ function renderUnreadAlert() {
   const chats = getChats();
   const counts = {};
   const currentUsername = String(state.currentUser.username || "").toLowerCase();
+  const seenIds = new Set();
 
   Object.values(chats).forEach((messages) => {
     if (!Array.isArray(messages)) return;
     messages.forEach((message) => {
+      const msgId = String(message.id || "");
+      if (msgId && seenIds.has(msgId)) return;
+      if (msgId) seenIds.add(msgId);
       const isForCurrentUser = message.receiverId === state.currentUser.id
         || String(message.receiverUsername || "").toLowerCase() === currentUsername;
       if (!isForCurrentUser) return;
@@ -1527,10 +1607,14 @@ function getUnreadMessageCount(chats, userId, username) {
   if ((!userId && !username) || !chats || typeof chats !== "object") return 0;
 
   const normalizedUsername = String(username || "").toLowerCase();
+  const seenIds = new Set();
   let count = 0;
   Object.values(chats).forEach((messages) => {
     if (!Array.isArray(messages)) return;
     messages.forEach((message) => {
+      const msgId = String(message.id || "");
+      if (msgId && seenIds.has(msgId)) return;
+      if (msgId) seenIds.add(msgId);
       const receiverIdMatch = userId ? message.receiverId === userId : false;
       const receiverUsernameMatch = normalizedUsername
         ? String(message.receiverUsername || "").toLowerCase() === normalizedUsername
