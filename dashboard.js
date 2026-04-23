@@ -1226,28 +1226,29 @@ function renderTickets() {
     `;
 
     const actions = row.lastElementChild;
-    actions.appendChild(makeAction("View", () => openTicketModal(ticket.id)));
+    actions.appendChild(makeAction("👁️", () => openTicketModal(ticket.id), false, "View Details"));
 
     if (state.currentUser.role === "admin") {
-      actions.appendChild(makeAction("Pending", () => setTicketStatus(ticket.id, "pending"), ticket.status === "pending"));
-      actions.appendChild(makeAction("Queued", () => setTicketStatus(ticket.id, "queued"), ticket.status === "queued"));
-      actions.appendChild(makeAction("Approved", () => setTicketStatus(ticket.id, "approved"), ticket.status === "approved"));
+      actions.appendChild(makeAction("🕒", () => setTicketStatus(ticket.id, "pending"), ticket.status === "pending", "Set Pending"));
+      actions.appendChild(makeAction("📥", () => setTicketStatus(ticket.id, "queued"), ticket.status === "queued", "Set Queued"));
+      actions.appendChild(makeAction("✅", () => setTicketStatus(ticket.id, "approved"), ticket.status === "approved", "Approve / Complete"));
     }
 
     const canDelete = state.currentUser.role === "admin" || ticket.employeeId === state.currentUser.id;
     if (canDelete) {
-      actions.appendChild(makeAction("Delete", () => deleteTicket(ticket.id)));
+      actions.appendChild(makeAction("🗑️", () => deleteTicket(ticket.id), false, "Delete Ticket"));
     }
 
     el.ticketsTableBody.appendChild(row);
   });
 }
 
-function makeAction(label, handler, disabled = false) {
+function makeAction(icon, handler, disabled = false, title = "") {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "btn tiny";
-  button.textContent = label;
+  button.className = "btn icon-action-btn";
+  button.innerHTML = icon;
+  button.title = title;
   button.disabled = disabled;
   button.addEventListener("click", handler);
   return button;

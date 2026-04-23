@@ -1154,6 +1154,35 @@ td {
   border-bottom: 1px solid #f1f5f9;
 }
 
+.icon-action-btn {
+  min-width: 32px !important;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1.1rem;
+  margin-right: 5px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  transform: scale(1.1);
+  border-color: var(--psa-blue);
+}
+
+.icon-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
 .deadline-progress-wrap {
   display: flex;
   align-items: center;
