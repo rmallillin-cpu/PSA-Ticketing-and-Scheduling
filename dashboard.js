@@ -1931,26 +1931,29 @@ function renderAnnouncements() {
   });
 }
 
-const SYSTEM_ANNOUNCEMENT_PATTERNS = [
-  /^TICKET\s+(SUBMITTED|UPDATED|DELETED)/i,
-  /^SCHEDULE\s+(ADDED|UPDATED|DELETED)/i,
-  /^ACCOMPLISHMENT REPORT SUBMITTED/i,
-  /^ATTENDANCE\s+\|/i,
-  /^TIME-IN:/i,
-  /^TIME-OUT:/i
-];
+function getSystemAnnouncementPatterns() {
+  return [
+    /^TICKET\s+(SUBMITTED|UPDATED|DELETED)/i,
+    /^SCHEDULE\s+(ADDED|UPDATED|DELETED)/i,
+    /^ACCOMPLISHMENT REPORT SUBMITTED/i,
+    /^ATTENDANCE\s+\|/i,
+    /^TIME-IN:/i,
+    /^TIME-OUT:/i
+  ];
+}
 
 function buildPublicFeedItems() {
   const LIMIT = 50;
   const allUsers = getUsers();
   const userMap = new Map(allUsers.map(u => [u.id, u]));
+  const systemAnnouncementPatterns = getSystemAnnouncementPatterns();
 
   const announcements = getAnnouncements()
     .filter((item) => {
       const sourceType = String(item.sourceType || "announcement").toLowerCase();
       if (sourceType === "system") return false;
       const message = String(item.message || "");
-      return !SYSTEM_ANNOUNCEMENT_PATTERNS.some((pattern) => pattern.test(message));
+      return !systemAnnouncementPatterns.some((pattern) => pattern.test(message));
     })
     .slice(-LIMIT)
     .map((item) => ({
