@@ -51,13 +51,26 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card announcement-section social-feed">
-      <div class="announce-trigger-row">
-        <img id="feedComposerAvatar" src="" alt="Trigger" class="avatar mini-avatar" />
-        <button id="openAnnouncementModalBtn" class="announce-trigger-btn" type="button">Announcement</button>
-        <button id="openAnnouncementModalIconBtn" class="btn icon-btn" type="button" title="POST">&#10133;</button>
+    <section class="card accomplishment-section">
+      <div class="section-title-row table-head-row">
+        <h3>Accomplishment Reports</h3>
+        <div class="calendar-nav">
+          <button id="openAccompEntryBtn" class="btn tiny primary">Submit New Report</button>
+        </div>
       </div>
-      <div id="announcementFeed" class="announcement-feed"></div>
+      <form id="accomplishmentForm" class="ticket-form accomplishment-form form-two-col">
+        <label>Name<input type="text" id="accompName" readonly /></label>
+        <label>Date<input type="date" id="accompDate" readonly /></label>
+        <label>Activity / Title<input type="text" id="accompActivity" required /></label>
+        <label>Upload file<input type="file" id="accompFile" required /></label>
+        <button type="submit" class="btn tiny secondary form-full submit-btn"><img src="logo/submit.png" alt="" /><span>Submit Report</span></button>
+      </form>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Date</th><th>Activity/Title</th><th>File</th></tr></thead>
+          <tbody id="accomplishmentTableBody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 

@@ -568,10 +568,7 @@ function applyPageKindLayout() {
     mainFeedSection.classList.toggle("hidden", !isDashboard);
   }
 
-  if (pageKind === "calendar") mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
-  if (pageKind === "ticket") mountStandalonePanel(el.ticketPanelModal); // Removed closeBtn as it's handled by mountStandalonePanel
-  if (pageKind === "accomplishment") mountStandalonePanel(el.accompPanelModal); // Removed closeBtn
-  if (pageKind === "admin-logs") mountStandalonePanel(el.adminLogsPanelModal); // Removed closeBtn
+  // Content is now directly in main section for each page
 }
 
 function mountStandalonePanel(modal, closeBtn) {

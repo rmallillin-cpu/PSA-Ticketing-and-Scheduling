@@ -50,13 +50,33 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card announcement-section social-feed">
-      <div class="announce-trigger-row">
-        <img id="feedComposerAvatar" src="" alt="Trigger" class="avatar mini-avatar" />
-        <button id="openAnnouncementModalBtn" class="announce-trigger-btn" type="button">Announcement</button>
-        <button id="openAnnouncementModalIconBtn" class="btn icon-btn" type="button" title="POST">&#10133;</button>
+    <section class="card ticket-section">
+      <div class="section-title-row table-head-row">
+        <h3>Tickets</h3>
+        <div class="calendar-nav">
+          <button id="openTicketEntryBtn" class="btn tiny primary">Create New Ticket</button>
+        </div>
       </div>
-      <div id="announcementFeed" class="announcement-feed"></div>
+
+      <div class="section-title-row table-head-row">
+        <h4>Queued Tickets</h4>
+        <div class="status-filters">
+          <input id="ticketSearch" type="text" placeholder="Search ticket #/subject/status/signatory" />
+          <input id="ticketSenderSearch" type="text" placeholder="Search sender name" />
+          <select id="ticketGroupSelect">
+            <option value="">No Grouping</option>
+            <option value="status">Group by Status</option>
+            <option value="signatoryName">Group by Signatory</option>
+          </select>
+        </div>
+        <button id="printUserTicketsBtn" class="btn tiny secondary" type="button">Print</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ticket #</th><th>Subject</th><th>Progress</th><th>Status</th><th>Signatory</th><th>File</th><th>Actions</th></tr></thead>
+          <tbody id="ticketsTableBody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 

@@ -51,13 +51,37 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card announcement-section social-feed">
-      <div class="announce-trigger-row">
-        <img id="feedComposerAvatar" src="" alt="Trigger" class="avatar mini-avatar" />
-        <button id="openAnnouncementModalBtn" class="announce-trigger-btn" type="button">Announcement</button>
-        <button id="openAnnouncementModalIconBtn" class="btn icon-btn" type="button" title="POST">&#10133;</button>
+    <section class="card admin-logs-section">
+      <div class="section-title-row table-head-row">
+        <h3>Admin dashboard logs</h3>
       </div>
-      <div id="announcementFeed" class="announcement-feed"></div>
+      <div id="adminStatsSummary" class="stats-row"></div>
+      <div class="status-filters">
+        <select id="adminDepartmentFilter"><option value="">All departments</option></select>
+        <input id="adminNameFilter" type="text" placeholder="Filter by name (Last, First, M.)" />
+        <select id="adminGroupSelect">
+          <option value="">No Grouping</option>
+          <option value="department">Group by Department</option>
+          <option value="status">Group by Status</option>
+        </select>
+      </div>
+      <div class="log-tabs">
+        <button id="tabScheduleBtn" class="btn tiny active-tab" type="button">Schedules</button>
+        <button id="tabTicketBtn" class="btn tiny" type="button">Ticket</button>
+        <button id="tabAccompBtn" class="btn tiny" type="button">Accomplishment Reports</button>
+      </div>
+      <section id="panelSchedule" class="log-panel">
+        <div class="section-title-row table-head-row"><h4>Schedule of all employees</h4><button id="printScheduleLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Activity</th><th>City/Municipality</th><th>Status</th></tr></thead><tbody id="adminScheduleTableBody"></tbody></table></div>
+      </section>
+      <section id="panelTicket" class="log-panel hidden">
+        <div class="section-title-row table-head-row"><h4>Tickets status for all employees</h4><button id="printTicketLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Ticket #</th><th>Employee</th><th>Department</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody id="adminTicketsTableBody"></tbody></table></div>
+      </section>
+      <section id="panelAccomp" class="log-panel hidden">
+        <div class="section-title-row table-head-row"><h4>Accomplishment report status for all employees</h4><button id="printAccompLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Activity/Title</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Status</th><th>File</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
+      </section>
     </section>
   </main>
 
