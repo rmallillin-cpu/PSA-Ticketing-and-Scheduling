@@ -10,7 +10,8 @@
   --danger: #c62828;
   --success: #2e7d32;
   --warning: #e38b00;
-  --queued: #3949ab;
+  --queued: #0038a8;
+  --psa-blue: #0038a8;
   --radius: 16px;
   --shadow: 0 20px 45px rgba(8, 50, 98, 0.2);
 }
@@ -21,33 +22,14 @@
 
 body {
   margin: 0;
-  font-family: "Gotham", "Montserrat", "Manrope", sans-serif;
-  font-size: 10px;
+  font-family: "Manrope", "Sora", sans-serif;
+  font-size: 14px;
   font-weight: 400;
-  color: var(--text);
+  color: #1e293b;
   min-height: 100vh;
-  background: linear-gradient(145deg, #edf5ff, var(--bg-1) 45%, var(--bg-2));
+  background-color: #f0f2f5;
   position: relative;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: url("logo/PSA.png") no-repeat center;
-  background-size: min(90vw, 980px);
-  opacity: 0.14;
-  z-index: -2;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.7), transparent 50%),
-    radial-gradient(circle at 85% 88%, rgba(0, 112, 224, 0.14), transparent 50%);
-  z-index: -1;
+  background-image: none;
 }
 
 h1, h2, h3, h4 {
@@ -80,8 +62,9 @@ a {
 
 .social-shell {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr 340px; /* Sidebar is 340px wide */
+  grid-template-rows: auto 1fr;
+  gap: 20px;
   align-items: start;
 }
 
@@ -309,8 +292,8 @@ textarea:focus {
 }
 
 .topbar {
-  padding: 8px 12px;
-  margin-bottom: 8px;
+  padding: 16px 24px;
+  margin-bottom: 0;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -318,8 +301,8 @@ textarea:focus {
 }
 
 .social-topbar {
-  grid-column: 1 / -1;
-  position: sticky;
+  grid-column: 1; /* Header now fits in the left column only */
+  position: relative;
   top: 0;
   z-index: 50;
 }
@@ -429,14 +412,11 @@ textarea:focus {
 }
 
 .employee-corner {
-  position: fixed;
-  top: 94px;
-  right: 14px;
-  width: calc(290px + 0.5in);
-  max-height: none;
+  grid-column: 2;
+  grid-row: 1 / 3; /* Spans from top to bottom */
+  width: 100%;
   overflow: hidden;
-  padding: 14px;
-  z-index: 40;
+  padding: 20px;
 }
 
 .left-nav-panel {
@@ -512,6 +492,13 @@ textarea:focus {
   min-height: 30px;
   text-decoration: none;
   color: inherit;
+}
+
+.active-tab-btn {
+    background: #eef2ff !important;
+    border-left: 4px solid var(--psa-blue) !important;
+    color: var(--psa-blue) !important;
+    font-weight: 700 !important;
 }
 
 .left-tab-btn span {
@@ -1141,24 +1128,30 @@ body[data-page-kind="dashboard"] a[href="dashboard.html"] {
 table {
   width: 100%;
   border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 th,
 td {
-  border-bottom: 1px solid var(--line);
-  padding: 10px;
+  padding: 12px 15px;
   text-align: left;
-  font-size: 1rem;
-  font-weight: 400;
 }
 
 th {
-  font-size: 0.82rem;
+  background-color: #f8fafc;
+  color: #475569;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  color: #f5f9ff;
-  background: linear-gradient(135deg, #3d6ea8, #1f4f86 52%, #3a78b4);
-  border-bottom: 1px solid #2f5a8d;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+td {
+  font-size: 0.9rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .deadline-progress-wrap {
@@ -1221,13 +1214,8 @@ th {
 .standalone-panel {
   position: static;
   margin: 0;
-  width: calc(100% - (320px + 0.7in));
-  max-width: none;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
+  grid-column: 1;
+  width: 100%;
 }
 
 .standalone-panel .modal-body {
@@ -1237,8 +1225,9 @@ th {
 }
 
 .module-page-host {
-  width: calc(100% - (320px + 0.7in));
-  margin: 0;
+  grid-column: 1;
+  width: 100%;
+  min-height: 80vh;
 }
 
 .calendar-view-modal-body {
