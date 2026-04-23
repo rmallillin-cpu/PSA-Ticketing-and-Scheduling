@@ -204,10 +204,10 @@ function initDashboard() {
 function bindEvents() {
   window.addEventListener("storage", handleStorageUpdate);
 
-  el.openCalendarPanelBtn.addEventListener("click", () => el.calendarPanelModal.showModal());
-  el.openTicketPanelBtn.addEventListener("click", () => el.ticketPanelModal.showModal());
-  el.openAccompPanelBtn.addEventListener("click", () => el.accompPanelModal.showModal());
-  el.openAdminLogsPanelBtn.addEventListener("click", () => el.adminLogsPanelModal.showModal());
+  bindPanelLauncher(el.openCalendarPanelBtn, el.calendarPanelModal, "calendar");
+  bindPanelLauncher(el.openTicketPanelBtn, el.ticketPanelModal, "ticket");
+  bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");
+  bindPanelLauncher(el.openAdminLogsPanelBtn, el.adminLogsPanelModal, "admin-logs");
   el.closeCalendarPanelBtn.addEventListener("click", () => el.calendarPanelModal.close());
   el.closeTicketPanelBtn.addEventListener("click", () => el.ticketPanelModal.close());
   el.closeAccompPanelBtn.addEventListener("click", () => el.accompPanelModal.close());
@@ -435,6 +435,43 @@ function populateAdminDepartmentFilter() {
 function setAdminTab(tab) {
   state.activeAdminTab = tab;
   applyAdminTabVisibility();
+  applyPageKindLayout();
+}
+
+function bindPanelLauncher(trigger, modal, panelKey) {
+  if (!trigger || !modal) return;
+  const pageKind = document.body.dataset.pageKind || "dashboard";
+  const isAnchor = trigger.tagName === "A";
+  if (isAnchor) {
+    if (pageKind === panelKey) {
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        modal.showModal();
+      });
+    }
+    return;
+  }
+  trigger.addEventListener("click", () => modal.showModal());
+}
+
+function applyPageKindLayout() {
+  const pageKind = document.body.dataset.pageKind || "dashboard";
+  const isDashboard = pageKind === "dashboard";
+
+  if (el.openAnnouncementModalBtn) {
+    el.openAnnouncementModalBtn.classList.toggle("hidden", !isDashboard);
+  }
+  if (el.openAnnouncementModalIconBtn) {
+    el.openAnnouncementModalIconBtn.classList.toggle("hidden", !isDashboard);
+  }
+  if (el.announcementFeed?.parentElement) {
+    el.announcementFeed.parentElement.classList.toggle("hidden", !isDashboard);
+  }
+
+  if (pageKind === "calendar") el.calendarPanelModal?.showModal();
+  if (pageKind === "ticket") el.ticketPanelModal?.showModal();
+  if (pageKind === "accomplishment") el.accompPanelModal?.showModal();
+  if (pageKind === "admin-logs") el.adminLogsPanelModal?.showModal();
 }
 
 function applyAdminTabVisibility() {

@@ -433,8 +433,8 @@ textarea:focus {
   top: 94px;
   right: 14px;
   width: calc(290px + 0.5in);
-  max-height: 72vh;
-  overflow: auto;
+  max-height: none;
+  overflow: hidden;
   padding: 14px;
   z-index: 40;
 }
@@ -452,24 +452,38 @@ textarea:focus {
   display: grid;
   justify-items: center;
   text-align: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .profile-avatar-large {
-  width: 82px !important;
-  height: 82px !important;
-  max-width: 82px !important;
-  max-height: 82px !important;
+  width: 66px !important;
+  height: 66px !important;
+  max-width: 66px !important;
+  max-height: 66px !important;
 }
 
 #userMeta {
   color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .time-in-status {
   color: #1e7d3d;
   font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+#welcomeText {
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+#cloudSyncStatus {
+  font-size: 0.76rem;
+  line-height: 1.2;
 }
 
 .employee-nav-title {
@@ -496,6 +510,8 @@ textarea:focus {
   line-height: 1.2;
   overflow: visible;
   min-height: 30px;
+  text-decoration: none;
+  color: inherit;
 }
 
 .left-tab-btn span {
@@ -531,6 +547,16 @@ textarea:focus {
 .logout-text-btn {
   justify-content: center;
   font-weight: 700;
+}
+
+body[data-page-kind="calendar"] a[href="calendar.html"],
+body[data-page-kind="ticket"] a[href="ticket.html"],
+body[data-page-kind="accomplishment"] a[href="accomplishment.html"],
+body[data-page-kind="admin-logs"] a[href="admin-logs.html"],
+body[data-page-kind="dashboard"] a[href="dashboard.html"] {
+  background: linear-gradient(130deg, var(--primary), #1e7de6);
+  color: #fff;
+  border-color: transparent;
 }
 
 .employee-name-list {
