@@ -1,7 +1,9 @@
 param(
   [int]$IntervalSeconds = 15,
   [string]$Branch = 'main',
-  [switch]$RunSupabase = $true
+  [switch]$RunSupabase = $true,
+  [string]$SupabaseProjectRef = 'ofidtdjoqkcfprwtolms',
+  [string]$SupabaseDbPassword = $env:SUPABASE_DB_PASSWORD
 )
 
 $ErrorActionPreference = 'Continue'
@@ -59,6 +61,22 @@ function Push-Supabase {
     return
   }
 
+  if ([string]::IsNullOrWhiteSpace($SupabaseProjectRef)) {
+    Write-Info 'Supabase project ref is empty. Set -SupabaseProjectRef to continue.'
+    return
+  }
+
+  if ([string]::IsNullOrWhiteSpace($SupabaseDbPassword)) {
+    Write-Info 'SUPABASE_DB_PASSWORD is missing. Set it to allow automatic Supabase db push.'
+    return
+  }
+
+  supabase link --project-ref $SupabaseProjectRef --password $SupabaseDbPassword --yes | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Info "Supabase link failed for project '$SupabaseProjectRef'."
+    return
+  }
+
   supabase db push
   if ($LASTEXITCODE -eq 0) {
     Write-Info 'Supabase db push succeeded.'
@@ -68,7 +86,7 @@ function Push-Supabase {
 }
 
 Write-Info "Auto Push (GitHub + Supabase) started. Checking every $IntervalSeconds second(s). Press Ctrl+C to stop."
-Write-Info "Requires: git auth, Supabase CLI login, and linked Supabase project."
+Write-Info "Requires: git auth, Supabase CLI login, and SUPABASE_DB_PASSWORD for Supabase auto-push."
 
 while ($true) {
   try {
