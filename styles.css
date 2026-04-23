@@ -295,7 +295,7 @@ textarea:focus {
   padding: 12px 24px;
   margin-bottom: 0;
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto 1fr; /* Brand | Search | Empty space */
   align-items: center;
   column-gap: 30px;
   background: var(--psa-blue); /* Header is now Blue */
@@ -596,15 +596,14 @@ body[data-page-kind="dashboard"] a[href="dashboard.html"] {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #cbd5e1; /* Offline color */
+  background: #cbd5e1; /* Gray for offline */
   display: inline-block;
-  margin-right: 6px;
-  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .status-dot.online {
-  background: #22c55e; /* Green online color */
-  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  background: #22c55e; /* Green for online */
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
 .name-unread {

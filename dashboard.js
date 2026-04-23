@@ -156,8 +156,11 @@ const el = {
 startDashboard();
 
 async function startDashboard() {
-  applyPageKindLayout(); // Initialize layout immediately before async calls
-  highlightActiveTab();  // Show which page we are on
+  // Initialize UI safely first
+  highlightActiveTab();
+  applyPageKindLayout(); 
+  
+  // Then attempt async cloud sync
   await bootstrapCloudState();
   initDashboard();
   startCloudPolling(() => {
@@ -223,20 +226,23 @@ function initDashboard() {
 function bindEvents() {
   window.addEventListener("storage", handleStorageUpdate);
 
-  bindPanelLauncher(el.openCalendarPanelBtn, el.calendarPanelModal, "calendar");
-  bindPanelLauncher(el.openTicketPanelBtn, el.ticketPanelModal, "ticket");
-  bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");
+  if (el.openCalendarPanelBtn) bindPanelLauncher(el.openCalendarPanelBtn, el.calendarPanelModal, "calendar");
+  if (el.openTicketPanelBtn) bindPanelLauncher(el.openTicketPanelBtn, el.ticketPanelModal, "ticket");
+  if (el.openAccompPanelBtn) bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");
+  if (el.openAdminLogsPanelBtn) bindPanelLauncher(el.openAdminLogsPanelBtn, el.adminLogsPanelModal, "admin-logs");
   
   if (el.openTicketEntryBtn) el.openTicketEntryBtn.addEventListener("click", () => el.ticketEntryModal.showModal());
   if (el.openAccompEntryBtn) el.openAccompEntryBtn.addEventListener("click", () => el.accompEntryModal.showModal());
 
   if (el.employeeSearchInput) el.employeeSearchInput.addEventListener("input", initMessenger);
 
-  el.openAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.showModal());
-  el.openAnnouncementModalIconBtn.addEventListener("click", () => el.announcementModal.showModal());
-  el.closeAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.close());
+  if (el.openAnnouncementModalBtn) {
+    el.openAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.showModal());
+    el.openAnnouncementModalIconBtn.addEventListener("click", () => el.announcementModal.showModal());
+    el.closeAnnouncementModalBtn.addEventListener("click", () => el.announcementModal.close());
+  }
 
-  el.closeMessengerBtn.addEventListener("click", () => {
+  if (el.closeMessengerBtn) el.closeMessengerBtn.addEventListener("click", () => {
     el.messengerModal.close();
   });
 
@@ -528,7 +534,10 @@ function mountStandalonePanel(modal, closeBtn) {
   const body = modal.querySelector(".modal-body");
   if (!body) return;
 
+  // Don't re-mount if it's already there
   let host = document.getElementById("pageModuleHost");
+  if (host && host.contains(body)) return;
+
   if (!host) {
     host = document.createElement("section");
     host.id = "pageModuleHost";
@@ -639,17 +648,6 @@ function renderEmployeeNameList(users) {
     button.addEventListener("click", () => openMessengerForUser(token));
     el.employeeNameList.appendChild(button);
   });
-}
-
-function checkUserOnline(userId) {
-  const attendance = getAttendance();
-  const today = new Date().toISOString().split('T')[0];
-  // Check if they timed in today and haven't timed out
-  return attendance.some(entry => 
-    entry.userId === userId && 
-    entry.timeIn.startsWith(today) && 
-    !entry.timeOut
-  );
 }
 
 function openMessengerForUser(userId) {
@@ -1917,18 +1915,18 @@ function getUnreadMessageCount(chats, userId, username) {
 }
 
 function playNotificationSound() {
-  // Prioritize the user's specific mp3
-  const soundPath = "logo/notification.mp3";
   const tryPlay = (index) => {
-    const path = index === -1 ? soundPath : NOTIFY_SOUND_CANDIDATES[index];
-    if (index >= NOTIFY_SOUND_CANDIDATES.length) { playFallbackBeep(); return; }
+    if (index >= NOTIFY_SOUND_CANDIDATES.length) {
+      playFallbackBeep();
+      return;
+    }
 
-    const audio = new Audio(path);
+    const audio = new Audio(NOTIFY_SOUND_CANDIDATES[index]);
     audio.volume = 0.75;
     audio.play().catch(() => tryPlay(index + 1));
   };
 
-  tryPlay(-1);
+  tryPlay(0);
 }
 
 function playFallbackBeep() {
