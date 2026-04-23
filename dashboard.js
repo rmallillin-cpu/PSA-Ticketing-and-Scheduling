@@ -1395,6 +1395,7 @@ function saveEvent() {
     if (idx >= 0) {
       const prev = events[idx];
       events[idx] = { ...events[idx], ...payload };
+      setEvents(events);
       createSystemAnnouncement({
         message: `SCHEDULE UPDATED: ${prev.title} -> ${title} on ${el.eventDate.value} (${normalizeScheduleStatus(el.eventStatus.value)})`,
         attachment: "",
@@ -1404,6 +1405,7 @@ function saveEvent() {
     notify("Event updated.", "success");
   } else {
     events.push({ id: crypto.randomUUID(), ...payload, createdAt: new Date().toISOString() });
+    setEvents(events);
     createSystemAnnouncement({
       message: `SCHEDULE ADDED: ${title} ON ${el.eventDate.value} (${normalizeScheduleStatus(el.eventStatus.value)})`,
       attachment: "",
@@ -1412,7 +1414,6 @@ function saveEvent() {
     notify("Event added.", "success");
   }
 
-  setEvents(events);
   el.eventModal.close();
   state.editingEventId = null;
   renderCalendar();
@@ -1431,6 +1432,7 @@ function deleteEvent() {
   renderCalendarView();
   renderDailyScheduleTable(el.eventDate.value);
   renderAdminLogs();
+  renderAnnouncements();
   notify("Event deleted.", "success");
 }
 
