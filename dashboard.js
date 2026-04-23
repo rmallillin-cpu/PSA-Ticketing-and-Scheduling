@@ -199,6 +199,7 @@ function initDashboard() {
   renderAccomplishments();
   renderAdminLogs();
   renderAnnouncements();
+  applyPageKindLayout();
 }
 
 function bindEvents() {
