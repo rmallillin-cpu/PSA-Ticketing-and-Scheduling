@@ -181,6 +181,10 @@ async function startDashboard() {
   startCloudPolling(() => {
     renderAllData();
   }, 2000);
+
+  window.addEventListener("focus", () => {
+    renderAllData();
+  });
 }
 
 function forceCloudStatusResolution() {
@@ -1416,10 +1420,7 @@ function saveEvent() {
 
   el.eventModal.close();
   state.editingEventId = null;
-  renderCalendar();
-  renderCalendarView();
-  renderDailyScheduleTable(el.eventDate.value);
-  renderAdminLogs();
+  renderAllData();
 }
 
 function deleteEvent() {
@@ -1428,11 +1429,7 @@ function deleteEvent() {
   setEvents(filtered);
   el.eventModal.close();
   state.editingEventId = null;
-  renderCalendar();
-  renderCalendarView();
-  renderDailyScheduleTable(el.eventDate.value);
-  renderAdminLogs();
-  renderAnnouncements();
+  renderAllData();
   notify("Event deleted.", "success");
 }
 
@@ -1475,8 +1472,7 @@ async function createTicket() {
   el.ticketForm.reset();
   fillTicketDefaults();
   populateSignatories();
-  renderTickets();
-  renderAdminLogs();
+  renderAllData();
   notify(`Ticket ${ticket.ticketNumber} created.`, "success");
 }
 
@@ -1788,7 +1784,7 @@ async function submitAnnouncement() {
   fillAnnouncementDefaults();
   el.announcementModal.close();
   playNotificationSound();
-  renderAnnouncements();
+  renderAllData();
   notify("ANNOUNCEMENT POSTED.", "success");
 }
 
