@@ -13,6 +13,7 @@ const SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
 const CLOUD_STATE_TABLE = "portal_state";
 const CLOUD_STATE_ROW_ID = 1;
+const SUPABASE_API_KEY_QUERY = `apikey=${encodeURIComponent(SUPABASE_PUBLISHABLE_KEY)}`;
 const CLOUD_SYNC_KEYS = [
   STORAGE_KEYS.users,
   STORAGE_KEYS.events,
@@ -32,31 +33,37 @@ let cloudPollingTimer = null;
 let cloudBusy = false;
 let cloudWarned = false;
 let cloudConnected = false;
+let cloudAttempted = false;
 const CLOUD_SETUP_HINT = "Cloud sync is offline. Run supabase-setup.sql in Supabase SQL Editor and refresh.";
 
 function canUseCloudApi() {
   return !!supabaseClient || typeof fetch === "function";
 }
 
+function buildCloudRestUrl(pathAndQuery) {
+  const joiner = pathAndQuery.includes("?") ? "&" : "?";
+  return `${SUPABASE_URL}/rest/v1/${pathAndQuery}${joiner}${SUPABASE_API_KEY_QUERY}`;
+}
+
 async function cloudSelectPortalState(columns = "updated_at,data") {
   if (supabaseClient) {
-    const { data, error } = await supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .select(columns)
-      .eq("id", CLOUD_STATE_ROW_ID)
-      .single();
-    if (error) throw new Error(error.message || "Cloud select failed.");
-    return data || null;
+    try {
+      const { data, error } = await supabaseClient
+        .from(CLOUD_STATE_TABLE)
+        .select(columns)
+        .eq("id", CLOUD_STATE_ROW_ID)
+        .single();
+      if (error) throw new Error(error.message || "Cloud select failed.");
+      return data || null;
+    } catch (error) {
+      if (typeof fetch !== "function") throw error;
+    }
   }
 
   const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`,
+    buildCloudRestUrl(`${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`),
     {
       method: "GET",
-      headers: {
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-      },
       cache: "no-store"
     }
   );
@@ -71,22 +78,24 @@ async function cloudSelectPortalState(columns = "updated_at,data") {
 
 async function cloudUpsertPortalState(row, selectColumns = "") {
   if (supabaseClient) {
-    let query = supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .upsert(row, { onConflict: "id" });
-    if (selectColumns) query = query.select(selectColumns).single();
-    const { data, error } = await query;
-    if (error) throw new Error(error.message || "Cloud upsert failed.");
-    return data || null;
+    try {
+      let query = supabaseClient
+        .from(CLOUD_STATE_TABLE)
+        .upsert(row, { onConflict: "id" });
+      if (selectColumns) query = query.select(selectColumns).single();
+      const { data, error } = await query;
+      if (error) throw new Error(error.message || "Cloud upsert failed.");
+      return data || null;
+    } catch (error) {
+      if (typeof fetch !== "function") throw error;
+    }
   }
 
   const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${CLOUD_STATE_TABLE}?on_conflict=id`,
+    buildCloudRestUrl(`${CLOUD_STATE_TABLE}?on_conflict=id`),
     {
       method: "POST",
       headers: {
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
         "Content-Type": "application/json",
         Prefer: `resolution=merge-duplicates,return=${selectColumns ? "representation" : "minimal"}`
       },
@@ -387,6 +396,7 @@ function formatDisplayName(fullname) {
 }
 
 async function bootstrapCloudState() {
+  cloudAttempted = true;
   if (!canUseCloudApi() || cloudBusy) {
     warnCloudOnce("Supabase client not available. Running local-only mode.");
     cloudConnected = false;
@@ -464,11 +474,11 @@ async function ensureCloudRow() {
     });
   } catch (error) {
     console.warn("Supabase init row error:", error.message);
-    warnCloudOnce(error.message || CLOUD_SETUP_HINT);
   }
 }
 
 async function pushCloudState() {
+  cloudAttempted = true;
   if (!canUseCloudApi() || cloudBusy) return;
   cloudBusy = true;
   try {
@@ -491,14 +501,17 @@ async function pushCloudState() {
     cloudConnected = true;
   } catch (error) {
     console.warn("Supabase push error:", error.message);
-    warnCloudOnce(error.message || CLOUD_SETUP_HINT);
-    cloudConnected = false;
+    if (!cloudConnected) {
+      warnCloudOnce(error.message || CLOUD_SETUP_HINT);
+      cloudConnected = false;
+    }
   } finally {
     cloudBusy = false;
   }
 }
 
 async function pullCloudStateIfNewer() {
+  cloudAttempted = true;
   if (!canUseCloudApi() || cloudBusy) return false;
   cloudBusy = true;
   try {
@@ -619,6 +632,7 @@ function warnCloudOnce(message) {
 function getCloudSyncState() {
   return {
     connected: cloudConnected,
-    updatedAt: cloudUpdatedAt || ""
+    updatedAt: cloudUpdatedAt || "",
+    attempted: cloudAttempted
   };
 }

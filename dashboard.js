@@ -17,6 +17,7 @@ const NOTIFY_SOUND_CANDIDATES = [
 const state = {
   currentUser: null,
   calendarDate: new Date(),
+  calendarAutoFocused: false,
   editingEventId: null,
   activeTicketId: null,
   activeChatUserId: "",
@@ -161,8 +162,7 @@ startDashboard();
 async function startDashboard() {
   // Initialize UI safely first
   highlightActiveTab();
-  applyPageKindLayout(); 
-  forceCloudStatusResolution();
+  applyPageKindLayout();
   
   // Initialize UI with local data immediately
   initDashboard();
@@ -197,24 +197,6 @@ async function startDashboard() {
       renderAllData();
     }
   });
-}
-
-function forceCloudStatusResolution() {
-  if (!el.cloudSyncStatus) return;
-  setTimeout(() => {
-    if (!el.cloudSyncStatus) return;
-    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
-      renderCloudSyncStatus();
-    }
-  }, 1200);
-  setTimeout(() => {
-    if (!el.cloudSyncStatus) return;
-    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
-      el.cloudSyncStatus.textContent = "Cloud sync: offline (local-only)";
-      el.cloudSyncStatus.classList.remove("online");
-      el.cloudSyncStatus.classList.add("offline");
-    }
-  }, 3500);
 }
 
 function renderAllData() {
@@ -343,6 +325,7 @@ function bindEvents() {
   if (el.prevMonth) {
     el.prevMonth.addEventListener("click", () => {
       state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
+      state.calendarAutoFocused = true;
       renderCalendar();
       renderCalendarView();
     });
@@ -351,6 +334,7 @@ function bindEvents() {
   if (el.nextMonth) {
     el.nextMonth.addEventListener("click", () => {
       state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
+      state.calendarAutoFocused = true;
       renderCalendar();
       renderCalendarView();
     });
@@ -370,6 +354,7 @@ function bindEvents() {
   if (el.viewPrevMonth) {
     el.viewPrevMonth.addEventListener("click", () => {
       state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
+      state.calendarAutoFocused = true;
       renderCalendar();
       renderCalendarView();
     });
@@ -378,6 +363,7 @@ function bindEvents() {
   if (el.viewNextMonth) {
     el.viewNextMonth.addEventListener("click", () => {
       state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
+      state.calendarAutoFocused = true;
       renderCalendar();
       renderCalendarView();
     });
@@ -386,6 +372,7 @@ function bindEvents() {
   if (el.viewToday) {
     el.viewToday.addEventListener("click", () => {
       state.calendarDate = new Date();
+      state.calendarAutoFocused = true;
       renderCalendar();
       renderCalendarView();
     });
@@ -529,11 +516,16 @@ function bindHeader() {
 
 function renderCloudSyncStatus() {
   if (!el.cloudSyncStatus) return;
-  let stateInfo = { connected: false };
+  let stateInfo = { connected: false, attempted: false };
   try {
     stateInfo = getCloudSyncState();
   } catch {
-    stateInfo = { connected: false };
+    stateInfo = { connected: false, attempted: false };
+  }
+  if (!stateInfo.attempted) {
+    el.cloudSyncStatus.textContent = "Cloud sync: checking...";
+    el.cloudSyncStatus.classList.remove("online", "offline");
+    return;
   }
   if (stateInfo.connected) {
     el.cloudSyncStatus.textContent = "Cloud sync: connected";
@@ -544,14 +536,6 @@ function renderCloudSyncStatus() {
     el.cloudSyncStatus.classList.remove("online");
     el.cloudSyncStatus.classList.add("offline");
   }
-
-  setTimeout(() => {
-    if (!el.cloudSyncStatus) return;
-    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
-      const fallback = getCloudSyncState();
-      el.cloudSyncStatus.textContent = fallback.connected ? "Cloud sync: connected" : "Cloud sync: offline (local-only)";
-    }
-  }, 2500);
 }
 
 function fillTicketDefaults() {
@@ -1219,19 +1203,55 @@ function renderUnreadAlert() {
 
 function renderCalendar() {
   if (!el.calendarGrid || !el.calendarMonth) return;
+  ensureCalendarFocus();
   renderCalendarGrid(el.calendarGrid, el.calendarMonth, false);
 
-  const todayKey = localDateKey(new Date());
-  const events = getEvents();
-  // Always try to load today's schedule into the table if the container exists
+  const scheduleDate = getPreferredScheduleDateKey();
   if (el.dailyScheduleTableBody && el.dailyScheduleContainer) {
-     renderDailyScheduleTable(todayKey);
+    renderDailyScheduleTable(scheduleDate);
   }
 }
 
 function renderCalendarView() {
   if (!el.calendarViewGrid || !el.calendarViewMonth) return;
+  ensureCalendarFocus();
   renderCalendarGrid(el.calendarViewGrid, el.calendarViewMonth, true);
+}
+
+function getPreferredCalendarEvent() {
+  const events = getEvents().slice();
+  if (!events.length) return null;
+  const todayKey = localDateKey(new Date());
+  const sortByRecency = (a, b) => {
+    const aStamp = a.updatedAt || a.createdAt || `${a.date || ""}T00:00:00`;
+    const bStamp = b.updatedAt || b.createdAt || `${b.date || ""}T00:00:00`;
+    return bStamp.localeCompare(aStamp);
+  };
+  const upcoming = events
+    .filter((event) => (event.date || "") >= todayKey)
+    .sort((a, b) => {
+      const byDate = (a.date || "").localeCompare(b.date || "");
+      return byDate || sortByRecency(a, b);
+    });
+  if (upcoming.length) return upcoming[0];
+  return events.sort(sortByRecency)[0] || null;
+}
+
+function ensureCalendarFocus(force = false) {
+  if (state.calendarAutoFocused && !force) return;
+  const preferredEvent = getPreferredCalendarEvent();
+  if (!preferredEvent?.date) {
+    state.calendarAutoFocused = true;
+    return;
+  }
+  const [year, month, day] = preferredEvent.date.split("-").map(Number);
+  state.calendarDate = new Date(year, (month || 1) - 1, day || 1);
+  state.calendarAutoFocused = true;
+}
+
+function getPreferredScheduleDateKey() {
+  const preferredEvent = getPreferredCalendarEvent();
+  return preferredEvent?.date || localDateKey(new Date());
 }
 
 function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
@@ -1422,6 +1442,11 @@ function saveEvent() {
     notify("Event added.", "success");
   }
 
+  if (payload.date) {
+    const [year, month, day] = payload.date.split("-").map(Number);
+    state.calendarDate = new Date(year, (month || 1) - 1, day || 1);
+    state.calendarAutoFocused = true;
+  }
   el.eventModal.close();
   state.editingEventId = null;
   renderAllData();
@@ -1920,7 +1945,11 @@ function buildPublicFeedItems() {
   }));
 
   const schedulePosts = getEvents()
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => {
+      const aStamp = a.updatedAt || a.createdAt || `${a.date || ""}T00:00:00`;
+      const bStamp = b.updatedAt || b.createdAt || `${b.date || ""}T00:00:00`;
+      return bStamp.localeCompare(aStamp);
+    })
     .slice(0, LIMIT)
     .map((event) => ({
     id: `event-${event.id}`,
