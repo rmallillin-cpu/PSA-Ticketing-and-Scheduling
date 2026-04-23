@@ -51,9 +51,13 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card admin-logs-section">
+    <section class="card module-page admin-logs-section">
       <div class="section-title-row table-head-row">
-        <h3>Admin dashboard logs</h3>
+        <div class="module-heading">
+          <span class="module-kicker">Administration</span>
+          <h3>Admin Dashboard Logs</h3>
+          <p class="module-subtitle">Review schedules, tickets, and accomplishment activity with the same table layout across every module.</p>
+        </div>
       </div>
       <div id="adminStatsSummary" class="stats-row"></div>
       <div class="status-filters">
@@ -72,15 +76,15 @@
       </div>
       <section id="panelSchedule" class="log-panel">
         <div class="section-title-row table-head-row"><h4>Schedule of all employees</h4><button id="printScheduleLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Activity</th><th>City/Municipality</th><th>Status</th></tr></thead><tbody id="adminScheduleTableBody"></tbody></table></div>
+        <div class="table-wrap table-panel"><table class="data-table"><thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Activity</th><th>City/Municipality</th><th>Status</th></tr></thead><tbody id="adminScheduleTableBody"></tbody></table></div>
       </section>
       <section id="panelTicket" class="log-panel hidden">
         <div class="section-title-row table-head-row"><h4>Tickets status for all employees</h4><button id="printTicketLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Ticket #</th><th>Employee</th><th>Department</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody id="adminTicketsTableBody"></tbody></table></div>
+        <div class="table-wrap table-panel"><table class="data-table"><thead><tr><th>Ticket #</th><th>Employee</th><th>Department</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody id="adminTicketsTableBody"></tbody></table></div>
       </section>
       <section id="panelAccomp" class="log-panel hidden">
         <div class="section-title-row table-head-row"><h4>Accomplishment report status for all employees</h4><button id="printAccompLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Activity/Title</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Status</th><th>File</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
+        <div class="table-wrap table-panel"><table class="data-table"><thead><tr><th>Employee</th><th>Department</th><th>Activity/Title</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Status</th><th>File</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
       </section>
     </section>
   </main>
@@ -136,6 +140,37 @@
       <section id="panelAccomp" class="log-panel hidden">
         <div class="section-title-row table-head-row"><h4>Accomplishment report status for all employees</h4><button id="printAccompLogBtn" class="btn tiny secondary" type="button">Print</button></div>
         <div class="table-wrap"><table><thead><tr><th>EMPLOYEE</th><th>DEPARTMENT</th><th>ACTIVITY/TITLE</th><th>DATE</th><th>TIME IN</th><th>TIME OUT</th><th>STATUS</th><th>FILE</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="messengerModal" class="modal chat-popup">
+    <div class="modal-body chat-popup-body">
+      <aside class="chat-sidebar-pane">
+        <div class="chat-sidebar-title"><h3>Chats</h3><p>Choose who you want to message.</p></div>
+        <label class="chat-select-wrap">
+          <span>Employee</span>
+          <select id="chatEmployeeSelect" aria-label="Select employee for chat"></select>
+        </label>
+      </aside>
+      <section class="chat-conversation-pane">
+        <div class="chat-conversation-head">
+          <div class="chat-current-user">
+            <div id="chatCurrentAvatar" class="chat-current-avatar"><span>PS</span></div>
+            <div class="chat-current-copy">
+              <strong id="chatCurrentName">Select a conversation</strong>
+              <span id="chatCurrentMeta">Choose an employee from the list.</span>
+            </div>
+          </div>
+          <button type="button" class="btn ghost" id="closeMessengerBtn">Close</button>
+        </div>
+        <div id="chatThread" class="chat-thread"></div>
+        <form id="chatForm" class="chat-form">
+          <label class="chat-clip-btn" title="Upload file">&#128206;<input id="chatFileInput" type="file" /></label>
+          <textarea id="chatMessageInput" rows="2" placeholder="Type a message..."></textarea>
+          <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Send</span></button>
+          <span id="chatSelectedFile" class="chat-file-name">No file selected</span>
+        </form>
       </section>
     </div>
   </dialog>

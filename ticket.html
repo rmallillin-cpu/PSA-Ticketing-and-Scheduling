@@ -50,9 +50,13 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card ticket-section">
+    <section class="card module-page ticket-section">
       <div class="section-title-row table-head-row">
-        <h3>Tickets</h3>
+        <div class="module-heading">
+          <span class="module-kicker">Ticketing</span>
+          <h3>Tickets</h3>
+          <p class="module-subtitle">Create, track, and update ticket requests with a consistent status workflow.</p>
+        </div>
         <div class="calendar-nav">
           <button id="openTicketEntryBtn" class="btn tiny primary">Create New Ticket</button>
         </div>
@@ -71,8 +75,8 @@
         </div>
         <button id="printUserTicketsBtn" class="btn tiny secondary" type="button">Print</button>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap table-panel">
+        <table class="data-table">
           <thead><tr><th>Ticket #</th><th>Subject</th><th>Progress</th><th>Status</th><th>Signatory</th><th>File</th><th>Actions</th></tr></thead>
           <tbody id="ticketsTableBody"></tbody>
         </table>
@@ -267,15 +271,32 @@
 
   <dialog id="messengerModal" class="modal chat-popup">
     <div class="modal-body chat-popup-body">
-      <div class="section-title-row"><h3>Messenger</h3><button type="button" class="btn ghost" id="closeMessengerBtn">Close</button></div>
-      <select id="chatEmployeeSelect" aria-label="Select employee for chat"></select>
-      <div id="chatThread" class="chat-thread"></div>
-      <form id="chatForm" class="chat-form">
-        <label class="chat-clip-btn" title="Upload file">&#128206;<input id="chatFileInput" type="file" /></label>
-        <textarea id="chatMessageInput" rows="2" placeholder="Type a message..."></textarea>
-        <span id="chatSelectedFile" class="chat-file-name">No file selected</span>
-        <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Send</span></button>
-      </form>
+      <aside class="chat-sidebar-pane">
+        <div class="chat-sidebar-title"><h3>Chats</h3><p>Choose who you want to message.</p></div>
+        <label class="chat-select-wrap">
+          <span>Employee</span>
+          <select id="chatEmployeeSelect" aria-label="Select employee for chat"></select>
+        </label>
+      </aside>
+      <section class="chat-conversation-pane">
+        <div class="chat-conversation-head">
+          <div class="chat-current-user">
+            <div id="chatCurrentAvatar" class="chat-current-avatar"><span>PS</span></div>
+            <div class="chat-current-copy">
+              <strong id="chatCurrentName">Select a conversation</strong>
+              <span id="chatCurrentMeta">Choose an employee from the list.</span>
+            </div>
+          </div>
+          <button type="button" class="btn ghost" id="closeMessengerBtn">Close</button>
+        </div>
+        <div id="chatThread" class="chat-thread"></div>
+        <form id="chatForm" class="chat-form">
+          <label class="chat-clip-btn" title="Upload file">&#128206;<input id="chatFileInput" type="file" /></label>
+          <textarea id="chatMessageInput" rows="2" placeholder="Type a message..."></textarea>
+          <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Send</span></button>
+          <span id="chatSelectedFile" class="chat-file-name">No file selected</span>
+        </form>
+      </section>
     </div>
   </dialog>
 

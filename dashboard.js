@@ -150,7 +150,10 @@ const el = {
   chatForm: document.getElementById("chatForm"),
   chatMessageInput: document.getElementById("chatMessageInput"),
   chatFileInput: document.getElementById("chatFileInput"),
-  chatSelectedFile: document.getElementById("chatSelectedFile")
+  chatSelectedFile: document.getElementById("chatSelectedFile"),
+  chatCurrentAvatar: document.getElementById("chatCurrentAvatar"),
+  chatCurrentName: document.getElementById("chatCurrentName"),
+  chatCurrentMeta: document.getElementById("chatCurrentMeta")
 };
 
 startDashboard();
@@ -264,8 +267,30 @@ function bindEvents() {
   if (el.openAccompPanelBtn) bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");
   if (el.openAdminLogsPanelBtn) bindPanelLauncher(el.openAdminLogsPanelBtn, el.adminLogsPanelModal, "admin-logs");
   
-  if (el.openTicketEntryBtn) el.openTicketEntryBtn.addEventListener("click", () => el.ticketEntryModal.showModal());
-  if (el.openAccompEntryBtn) el.openAccompEntryBtn.addEventListener("click", () => el.accompEntryModal.showModal());
+  if (el.openTicketEntryBtn) {
+    el.openTicketEntryBtn.addEventListener("click", () => {
+      if (el.ticketEntryModal) {
+        el.ticketEntryModal.showModal();
+        return;
+      }
+      if (el.ticketPanelModal && document.body.dataset.pageKind === "ticket") {
+        el.ticketPanelModal.showModal();
+        return;
+      }
+      el.ticketForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.ticketSubject?.focus();
+    });
+  }
+  if (el.openAccompEntryBtn) {
+    el.openAccompEntryBtn.addEventListener("click", () => {
+      if (el.accompEntryModal) {
+        el.accompEntryModal.showModal();
+        return;
+      }
+      el.accomplishmentForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.accompActivity?.focus();
+    });
+  }
 
   if (el.employeeSearchInput) el.employeeSearchInput.addEventListener("input", initMessenger);
 
@@ -298,101 +323,134 @@ function bindEvents() {
     window.location.href = "login.html";
   });
 
-  el.prevMonth.addEventListener("click", () => {
-    state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
-    renderCalendar();
-    renderCalendarView();
-  });
+  if (el.prevMonth) {
+    el.prevMonth.addEventListener("click", () => {
+      state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
+      renderCalendar();
+      renderCalendarView();
+    });
+  }
 
-  el.nextMonth.addEventListener("click", () => {
-    state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
-    renderCalendar();
-    renderCalendarView();
-  });
+  if (el.nextMonth) {
+    el.nextMonth.addEventListener("click", () => {
+      state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
+      renderCalendar();
+      renderCalendarView();
+    });
+  }
 
-  el.openCalendarViewBtn.addEventListener("click", () => {
-    renderCalendarView();
-    el.calendarViewModal.showModal();
-  });
+  if (el.openCalendarViewBtn && el.calendarViewModal) {
+    el.openCalendarViewBtn.addEventListener("click", () => {
+      renderCalendarView();
+      el.calendarViewModal.showModal();
+    });
+  }
 
-  el.closeCalendarView.addEventListener("click", () => el.calendarViewModal.close());
+  if (el.closeCalendarView && el.calendarViewModal) {
+    el.closeCalendarView.addEventListener("click", () => el.calendarViewModal.close());
+  }
 
-  el.viewPrevMonth.addEventListener("click", () => {
-    state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
-    renderCalendar();
-    renderCalendarView();
-  });
+  if (el.viewPrevMonth) {
+    el.viewPrevMonth.addEventListener("click", () => {
+      state.calendarDate.setMonth(state.calendarDate.getMonth() - 1);
+      renderCalendar();
+      renderCalendarView();
+    });
+  }
 
-  el.viewNextMonth.addEventListener("click", () => {
-    state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
-    renderCalendar();
-    renderCalendarView();
-  });
+  if (el.viewNextMonth) {
+    el.viewNextMonth.addEventListener("click", () => {
+      state.calendarDate.setMonth(state.calendarDate.getMonth() + 1);
+      renderCalendar();
+      renderCalendarView();
+    });
+  }
 
-  el.viewToday.addEventListener("click", () => {
-    state.calendarDate = new Date();
-    renderCalendar();
-    renderCalendarView();
-  });
+  if (el.viewToday) {
+    el.viewToday.addEventListener("click", () => {
+      state.calendarDate = new Date();
+      renderCalendar();
+      renderCalendarView();
+    });
+  }
 
-  el.eventForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    saveEvent();
-  });
+  if (el.eventForm) {
+    el.eventForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveEvent();
+    });
+  }
 
-  el.deleteEventBtn.addEventListener("click", deleteEvent);
-  el.cancelEventBtn.addEventListener("click", () => el.eventModal.close());
+  if (el.deleteEventBtn) el.deleteEventBtn.addEventListener("click", deleteEvent);
+  if (el.cancelEventBtn && el.eventModal) el.cancelEventBtn.addEventListener("click", () => el.eventModal.close());
 
-  el.ticketForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await createTicket();
-  });
+  if (el.ticketForm) {
+    el.ticketForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await createTicket();
+    });
+  }
 
-  el.accomplishmentForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await submitAccomplishment();
-  });
-  el.announcementForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await submitAnnouncement();
-  });
+  if (el.accomplishmentForm) {
+    el.accomplishmentForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitAccomplishment();
+    });
+  }
 
-  el.ticketSearch.addEventListener("input", renderTickets);
-  el.ticketSenderSearch.addEventListener("input", renderTickets);
+  if (el.announcementForm) {
+    el.announcementForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitAnnouncement();
+    });
+  }
+
+  if (el.ticketSearch) el.ticketSearch.addEventListener("input", renderTickets);
+  if (el.ticketSenderSearch) el.ticketSenderSearch.addEventListener("input", renderTickets);
   if (el.ticketGroupSelect) el.ticketGroupSelect.addEventListener("change", renderTickets);
   if (el.accompGroupSelect) el.accompGroupSelect.addEventListener("change", renderAccomplishments);
   if (el.adminGroupSelect) el.adminGroupSelect.addEventListener("change", renderAdminLogs);
-  el.printUserTicketsBtn.addEventListener("click", () => printTable("QUEUED TICKETS", el.ticketsTableBody));
+  if (el.printUserTicketsBtn) el.printUserTicketsBtn.addEventListener("click", () => printTable("QUEUED TICKETS", el.ticketsTableBody));
 
-  el.closeTicketModal.addEventListener("click", () => el.ticketModal.close());
+  if (el.closeTicketModal && el.ticketModal) el.closeTicketModal.addEventListener("click", () => el.ticketModal.close());
 
-  el.ticketUpdateForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    updateTicketInfo();
-  });
+  if (el.ticketUpdateForm) {
+    el.ticketUpdateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      updateTicketInfo();
+    });
+  }
 
-  el.noteForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await addNote();
-  });
+  if (el.noteForm) {
+    el.noteForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await addNote();
+    });
+  }
 
-  el.chatEmployeeSelect.addEventListener("change", () => {
-    state.activeChatUserId = el.chatEmployeeSelect.value;
-    if (!state.activeChatUserId) return;
-    markConversationAsRead(state.activeChatUserId);
-    renderChatThread();
-    renderUnreadAlert();
-  });
+  if (el.chatEmployeeSelect) {
+    el.chatEmployeeSelect.addEventListener("change", () => {
+      state.activeChatUserId = el.chatEmployeeSelect.value;
+      if (!state.activeChatUserId) return;
+      markConversationAsRead(state.activeChatUserId);
+      renderChatThread();
+      renderUnreadAlert();
+    });
+  }
 
-  el.chatForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    await sendChatMessage();
-  });
+  if (el.chatForm) {
+    el.chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await sendChatMessage();
+    });
+  }
 
-  el.chatFileInput.addEventListener("change", () => {
-    const file = el.chatFileInput.files[0];
-    el.chatSelectedFile.textContent = file ? file.name : "No file selected";
-  });
+  if (el.chatFileInput && el.chatSelectedFile) {
+    el.chatFileInput.addEventListener("change", () => {
+      const file = el.chatFileInput.files[0];
+      el.chatSelectedFile.textContent = file ? file.name : "No file selected";
+    });
+  }
 
   if (el.globalSearchInput) {
     el.globalSearchInput.addEventListener("input", () => {
@@ -480,6 +538,7 @@ function renderCloudSyncStatus() {
 }
 
 function fillTicketDefaults() {
+  if (!el.ticketNumber || !el.ticketDepartment || !el.ticketPosition || !el.ticketDeadline) return;
   const next = getNextTicketNumber();
   el.ticketNumber.value = next;
   el.ticketDepartment.value = state.currentUser.department;
@@ -488,11 +547,13 @@ function fillTicketDefaults() {
 }
 
 function fillAccomplishmentDefaults() {
+  if (!el.accompName || !el.accompDate) return;
   el.accompName.value = formatDisplayName(state.currentUser.fullname);
   el.accompDate.value = localDateKey(new Date());
 }
 
 function fillAnnouncementDefaults() {
+  if (!el.announcementName || !el.announcementDepartment || !el.announcementDate) return;
   el.announcementName.value = formatDisplayName(state.currentUser.fullname);
   el.announcementDepartment.value = state.currentUser.department || "-";
   el.announcementDate.value = localDateKey(new Date());
@@ -622,6 +683,7 @@ function applyAdminTabVisibility() {
 }
 
 function initMessenger() {
+  if (!el.chatEmployeeSelect || !el.employeeNameList || !el.chatThread || !el.chatForm) return;
   let users = getUniqueChatUsers(getUsers());
   const previousActiveChatUserId = state.activeChatUserId;
   el.chatEmployeeSelect.innerHTML = "";
@@ -637,6 +699,7 @@ function initMessenger() {
     el.chatEmployeeSelect.disabled = true;
     el.chatThread.innerHTML = "<p>No employee available for chat.</p>";
     el.chatForm.classList.add("hidden");
+    renderChatRecipientSummary("");
     renderUnreadAlert();
     return;
   }
@@ -667,11 +730,13 @@ function initMessenger() {
   el.chatEmployeeSelect.value = state.activeChatUserId;
   renderEmployeeNameList(users);
   if (state.activeChatUserId) markConversationAsRead(state.activeChatUserId);
+  renderChatRecipientSummary(state.activeChatUserId);
   renderChatThread();
   renderUnreadAlert();
 }
 
 function renderEmployeeNameList(users) {
+  if (!el.employeeNameList) return;
   el.employeeNameList.innerHTML = "";
   users.forEach((user) => {
     const token = normalizeToken(user.username || user.id);
@@ -684,9 +749,12 @@ function renderEmployeeNameList(users) {
     
     const isOnline = checkUserOnline(user.id);
     button.innerHTML = `
-      <div style="display:flex; align-items:center;">
-        <i class="status-dot ${isOnline ? 'online' : ''}"></i>
-        <span>${escapeHtml(formatDisplayName(user.fullname))}</span>
+      <div class="employee-name-main">
+        <span class="employee-avatar-chip">${escapeHtml(buildInitials(user.fullname || user.username || "U"))}</span>
+        <div class="employee-name-copy">
+          <div class="employee-name-title"><i class="status-dot ${isOnline ? 'online' : ''}"></i><span>${escapeHtml(formatDisplayName(user.fullname))}</span></div>
+          <div class="employee-name-meta">${escapeHtml(user.department || "-")} | ${escapeHtml(user.position || "-")}</div>
+        </div>
       </div>
       <i class="name-unread hidden">0</i>
     `;
@@ -696,15 +764,18 @@ function renderEmployeeNameList(users) {
 }
 
 function openMessengerForUser(userId) {
+  if (!el.chatEmployeeSelect || !el.messengerModal) return;
   state.activeChatUserId = userId;
   el.chatEmployeeSelect.value = userId;
   markConversationAsRead(userId);
+  renderChatRecipientSummary(userId);
   renderChatThread();
   renderUnreadAlert();
   el.messengerModal.showModal();
 }
 
 function populateSignatories() {
+  if (!el.ticketSignatory || !el.updateSignatory) return;
   const users = getUsers();
   const options = users
     .map((u) => `<option value="${u.id}">${escapeHtml(u.fullname)} [${escapeHtml(u.employeeCode || "-")}] (${escapeHtml(u.position)})</option>`)
@@ -716,6 +787,67 @@ function populateSignatories() {
 
 function normalizeToken(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function buildInitials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase();
+}
+
+function renderChatRecipientSummary(otherUserId) {
+  if (!el.chatCurrentName || !el.chatCurrentMeta || !el.chatCurrentAvatar) return;
+  const otherUser = otherUserId ? findUserByToken(otherUserId) : null;
+
+  if (!otherUser) {
+    el.chatCurrentName.textContent = "Select a conversation";
+    el.chatCurrentMeta.textContent = "Choose an employee from the list.";
+    el.chatCurrentAvatar.innerHTML = `<span>${escapeHtml(buildInitials("PSA"))}</span>`;
+    return;
+  }
+
+  const displayName = formatDisplayName(otherUser.fullname || otherUser.username || "Employee");
+  el.chatCurrentName.textContent = displayName;
+  el.chatCurrentMeta.textContent = `${otherUser.department || "-"} | ${checkUserOnline(otherUser.id) ? "Active now" : "Offline"}`;
+  if (otherUser.profilePicture) {
+    el.chatCurrentAvatar.innerHTML = `<img src="${otherUser.profilePicture}" alt="${escapeHtml(displayName)}" />`;
+  } else {
+    el.chatCurrentAvatar.innerHTML = `<span>${escapeHtml(buildInitials(otherUser.fullname || otherUser.username || "E"))}</span>`;
+  }
+}
+
+function formatChatDayLabel(dateValue) {
+  const date = new Date(dateValue);
+  if (!Number.isFinite(date.getTime())) return "";
+  const today = localDateKey(new Date());
+  const dateKey = localDateKey(date);
+  if (dateKey === today) return "Today";
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (dateKey === localDateKey(yesterday)) return "Yesterday";
+  return date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+}
+
+function formatChatTimeLabel(dateValue) {
+  const date = new Date(dateValue);
+  if (!Number.isFinite(date.getTime())) return "";
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function createChatAvatar(user, className = "chat-avatar") {
+  const avatar = document.createElement("div");
+  avatar.className = className;
+  const label = formatDisplayName(user?.fullname || user?.username || "Employee");
+  if (user?.profilePicture) {
+    avatar.innerHTML = `<img src="${user.profilePicture}" alt="${escapeHtml(label)}" />`;
+  } else {
+    avatar.textContent = buildInitials(user?.fullname || user?.username || "E");
+  }
+  return avatar;
 }
 
 function getConversationTokenSet(userId, fallbackUsername = "") {
@@ -904,26 +1036,46 @@ function markConversationAsRead(otherUserId) {
 }
 
 function renderChatThread() {
+  if (!el.chatThread) return;
   const otherUserId = state.activeChatUserId;
+  renderChatRecipientSummary(otherUserId);
   if (!otherUserId) {
-    el.chatThread.innerHTML = "<p>Select an employee to start chat.</p>";
+    el.chatThread.innerHTML = `<div class="chat-empty-state"><strong>No conversation selected</strong><span>Select an employee to start chatting.</span></div>`;
     return;
   }
 
+  const otherUser = findUserByToken(otherUserId);
   const messages = getConversationMessages(otherUserId)
     .slice()
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   el.chatThread.innerHTML = "";
   if (!messages.length) {
-    el.chatThread.innerHTML = "<p>No messages yet. Start the conversation.</p>";
+    el.chatThread.innerHTML = `<div class="chat-empty-state"><strong>No messages yet</strong><span>Send the first message to ${escapeHtml(formatDisplayName(otherUser?.fullname || otherUser?.username || "this employee"))}.</span></div>`;
     return;
   }
 
+  let lastDayLabel = "";
   messages.forEach((message) => {
-    const item = document.createElement("article");
     const mine = message.senderId === state.currentUser.id
       || normalizeToken(message.senderUsername) === normalizeToken(state.currentUser.username);
+    const senderUser = mine ? state.currentUser : (findUserByToken(message.senderId || message.senderUsername) || otherUser);
+    const dayLabel = formatChatDayLabel(message.createdAt);
+    if (dayLabel && dayLabel !== lastDayLabel) {
+      const divider = document.createElement("div");
+      divider.className = "chat-day-divider";
+      divider.innerHTML = `<span>${escapeHtml(dayLabel)}</span>`;
+      el.chatThread.appendChild(divider);
+      lastDayLabel = dayLabel;
+    }
+
+    const row = document.createElement("div");
+    row.className = `chat-row ${mine ? "mine" : "theirs"}`;
+    if (!mine) {
+      row.appendChild(createChatAvatar(senderUser, "chat-avatar"));
+    }
+
+    const item = document.createElement("article");
     item.className = `chat-message ${mine ? "mine" : "theirs"}`;
     const hasImage = String(message.attachmentType || "").startsWith("image/");
     const topRow = document.createElement("div");
@@ -931,7 +1083,9 @@ function renderChatThread() {
 
     const meta = document.createElement("div");
     meta.className = "chat-meta";
-    meta.textContent = `${message.senderName || "-"} | ${new Date(message.createdAt).toLocaleString()}`;
+    meta.textContent = mine
+      ? `You • ${formatChatTimeLabel(message.createdAt)}`
+      : `${formatDisplayName(message.senderName || senderUser?.fullname || "-")} • ${formatChatTimeLabel(message.createdAt)}`;
     topRow.appendChild(meta);
 
     if (mine) {
@@ -1004,11 +1158,12 @@ function renderChatThread() {
       link.download = message.attachmentName || "file";
       link.target = "_blank";
       link.rel = "noopener";
-      link.textContent = `View file: ${message.attachmentName || "file"}`;
+      link.textContent = message.attachmentName || "View file";
       item.appendChild(link);
     }
 
-    el.chatThread.appendChild(item);
+    row.appendChild(item);
+    el.chatThread.appendChild(row);
   });
 
   el.chatThread.scrollTop = el.chatThread.scrollHeight;
@@ -1085,14 +1240,17 @@ function renderUnreadAlert() {
 }
 
 function renderCalendar() {
+  if (!el.calendarGrid || !el.calendarMonth) return;
   renderCalendarGrid(el.calendarGrid, el.calendarMonth, false);
 }
 
 function renderCalendarView() {
+  if (!el.calendarViewGrid || !el.calendarViewMonth) return;
   renderCalendarGrid(el.calendarViewGrid, el.calendarViewMonth, true);
 }
 
 function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
+  if (!targetGrid || !targetMonthLabel) return;
   const base = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth(), 1);
   const year = base.getFullYear();
   const month = base.getMonth();
@@ -1128,7 +1286,20 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
     const cell = document.createElement("div");
     cell.className = "cal-cell";
     if (key === todayKey) cell.classList.add("today");
-    cell.innerHTML = `<div class="day-number">${day}</div>`;
+    cell.innerHTML = `
+      <div class="cal-cell-head">
+        <div class="day-number">${day}</div>
+        <button type="button" class="cal-add-btn" aria-label="Add schedule for ${key}">+</button>
+      </div>
+    `;
+
+    const addBtn = cell.querySelector(".cal-add-btn");
+    if (addBtn) {
+      addBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openEventModal(key, null);
+      });
+    }
 
     dayEvents.slice(0, isExpandedView ? 4 : 2).forEach((event) => {
       const badge = document.createElement("div");
@@ -1153,15 +1324,15 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
       cell.appendChild(more);
     }
 
-    // Click cell background to ADD NEW event
-    cell.addEventListener("click", () => openEventModal(key, null));
     cell.addEventListener("mouseenter", () => renderDailyScheduleTable(key));
     targetGrid.appendChild(cell);
   }
 }
 
 function renderDailyScheduleTable(dateKey) {
-  if (!el.dailyScheduleTableBody) return;
+  if (!el.dailyScheduleTableBody || !el.dailyScheduleContainer || !el.selectedScheduleDate) return;
+
+  el.dailyScheduleTableBody.innerHTML = "";
 
   // Show date immediately for user feedback
   el.selectedScheduleDate.textContent = dateKey;
@@ -1206,6 +1377,7 @@ function renderDailyScheduleTable(dateKey) {
 }
 
 function openEventModal(dateKey, eventId = null) {
+  if (!el.eventModal) return;
   const event = eventId ? getEvents().find((e) => e.id === eventId) : null;
   state.editingEventId = event?.id || null;
 
@@ -1222,6 +1394,7 @@ function openEventModal(dateKey, eventId = null) {
 }
 
 function saveEvent() {
+  if (!el.eventDate || !el.eventTitle || !el.eventDescription || !el.eventCity || !el.eventStatus) return;
   const title = el.eventTitle.value.trim();
   if (!title) {
     notify("Event title is required.", "error");
@@ -1264,8 +1437,10 @@ function saveEvent() {
 
   setEvents(events);
   el.eventModal.close();
+  state.editingEventId = null;
   renderCalendar();
   renderCalendarView();
+  renderDailyScheduleTable(el.eventDate.value);
   renderAdminLogs();
 }
 
@@ -1274,8 +1449,10 @@ function deleteEvent() {
   const filtered = getEvents().filter((event) => event.id !== state.editingEventId);
   setEvents(filtered);
   el.eventModal.close();
+  state.editingEventId = null;
   renderCalendar();
   renderCalendarView();
+  renderDailyScheduleTable(el.eventDate.value);
   renderAdminLogs();
   notify("Event deleted.", "success");
 }
@@ -1325,8 +1502,8 @@ async function createTicket() {
 }
 
 function visibleTickets() {
-  const keyword = el.ticketSearch.value.trim().toLowerCase();
-  const senderKeyword = el.ticketSenderSearch.value.trim().toLowerCase();
+  const keyword = (el.ticketSearch?.value || "").trim().toLowerCase();
+  const senderKeyword = (el.ticketSenderSearch?.value || "").trim().toLowerCase();
 
   return getTickets().filter((ticket) => {
     const keywordPass = !keyword || [ticket.ticketNumber, ticket.subject, ticket.status, ticket.signatoryName]
@@ -1341,6 +1518,7 @@ function visibleTickets() {
 }
 
 function renderTickets() {
+  if (!el.ticketsTableBody) return;
   const tickets = visibleTickets().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   el.ticketsTableBody.innerHTML = "";
   const groupKey = el.ticketGroupSelect ? el.ticketGroupSelect.value : "";
@@ -1636,6 +1814,7 @@ async function submitAnnouncement() {
 }
 
 function renderAnnouncements() {
+  if (!el.announcementFeed) return;
   const keyword = state.announcementFilter || "";
   const items = buildPublicFeedItems()
     .slice()
@@ -1998,6 +2177,7 @@ function playFallbackBeep() {
 }
 
 function renderAccomplishments() {
+  if (!el.accomplishmentTableBody) return;
   const reports = getAccomplishments()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
@@ -2031,6 +2211,7 @@ function renderAccomplishments() {
 }
 
 function renderAdminLogs() {
+  if (!el.adminLogsSection) return;
   if (state.currentUser.role !== "admin") {
     el.adminLogsSection.classList.add("hidden");
     return;
@@ -2070,6 +2251,7 @@ function renderAdminStats() {
 }
 
 function renderAdminScheduleLogs() {
+  if (!el.adminScheduleTableBody) return;
   const { department, nameKeyword } = getAdminLogFilters();
   const users = getUsers();
   const userMap = new Map(users.map((user) => [user.id, user]));
@@ -2117,6 +2299,7 @@ function renderAdminScheduleLogs() {
 }
 
 function renderAdminTicketLogs() {
+  if (!el.adminTicketsTableBody) return;
   const { department, nameKeyword } = getAdminLogFilters();
   const tickets = getTickets()
     .filter((ticket) => {
@@ -2149,6 +2332,7 @@ function renderAdminTicketLogs() {
 }
 
 function renderAdminAccomplishmentLogs() {
+  if (!el.adminAccomplishmentTableBody) return;
   const { department, nameKeyword } = getAdminLogFilters();
   const reports = getAccomplishments()
     .filter((report) => {

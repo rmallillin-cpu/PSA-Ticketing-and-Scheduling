@@ -51,14 +51,17 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card calendar-section">
+    <section class="card module-page calendar-section">
       <div class="section-title-row table-head-row">
-        <h3>Schedule calendar</h3>
+        <div class="module-heading">
+          <span class="module-kicker">Calendar</span>
+          <h3>Schedule Calendar</h3>
+          <p class="module-subtitle">Track assignments by date and preview schedules by hovering each day.</p>
+        </div>
         <div class="calendar-nav">
           <button id="prevMonth" class="btn tiny">Prev</button>
           <span id="calendarMonth"></span>
           <button id="nextMonth" class="btn tiny">Next</button>
-          <button id="openCalendarViewBtn" class="btn tiny secondary">View calendar</button>
         </div>
       </div>
       <div id="calendarGrid" class="calendar-grid"></div>
@@ -71,8 +74,8 @@
         <div class="section-title-row table-head-row">
           <h4>Schedules for <span id="selectedScheduleDate"></span></h4>
         </div>
-        <div class="table-wrap">
-          <table>
+        <div class="table-wrap table-panel">
+          <table class="data-table">
             <thead>
               <tr><th>Employee</th><th>Department</th><th>Activity</th><th>City</th><th>Status</th></tr>
             </thead>
@@ -106,40 +109,6 @@
       </label>
       <button type="submit" class="btn tiny secondary form-full">Post announcement</button>
     </form>
-  </dialog>
-
-  <dialog id="calendarPanelModal" class="modal wide">
-    <div class="modal-body">
-      <div class="section-title-row table-head-row">
-        <h3>Schedule calendar</h3>
-        <div class="calendar-nav">
-          <button id="prevMonth" class="btn tiny">Prev</button>
-          <span id="calendarMonth"></span>
-          <button id="nextMonth" class="btn tiny">Next</button>
-          <button id="openCalendarViewBtn" class="btn tiny secondary">View calendar</button>
-          <button id="closeCalendarPanelBtn" class="btn tiny ghost" type="button">Close</button>
-        </div>
-      </div>
-      <div id="calendarGrid" class="calendar-grid"></div>
-      <div class="calendar-legend">
-        <span><i class="dot mine"></i>Your event</span>
-        <span><i class="dot shared"></i>Assigned event</span>
-      </div>
-
-      <div id="dailyScheduleContainer" class="daily-schedule-container hidden">
-        <div class="section-title-row table-head-row">
-          <h4>Schedules for <span id="selectedScheduleDate"></span></h4>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Employee</th><th>Department</th><th>Activity</th><th>City</th><th>Status</th></tr>
-            </thead>
-            <tbody id="dailyScheduleTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </dialog>
 
   <dialog id="ticketPanelModal" class="modal wide">
@@ -319,15 +288,32 @@
 
   <dialog id="messengerModal" class="modal chat-popup">
     <div class="modal-body chat-popup-body">
-      <div class="section-title-row"><h3>Messenger</h3><button type="button" class="btn ghost" id="closeMessengerBtn">Close</button></div>
-      <select id="chatEmployeeSelect" aria-label="Select employee for chat"></select>
-      <div id="chatThread" class="chat-thread"></div>
-      <form id="chatForm" class="chat-form">
-        <label class="chat-clip-btn" title="Upload file">&#128206;<input id="chatFileInput" type="file" /></label>
-        <textarea id="chatMessageInput" rows="2" placeholder="Type a message..."></textarea>
-        <span id="chatSelectedFile" class="chat-file-name">No file selected</span>
-        <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Send</span></button>
-      </form>
+      <aside class="chat-sidebar-pane">
+        <div class="chat-sidebar-title"><h3>Chats</h3><p>Choose who you want to message.</p></div>
+        <label class="chat-select-wrap">
+          <span>Employee</span>
+          <select id="chatEmployeeSelect" aria-label="Select employee for chat"></select>
+        </label>
+      </aside>
+      <section class="chat-conversation-pane">
+        <div class="chat-conversation-head">
+          <div class="chat-current-user">
+            <div id="chatCurrentAvatar" class="chat-current-avatar"><span>PS</span></div>
+            <div class="chat-current-copy">
+              <strong id="chatCurrentName">Select a conversation</strong>
+              <span id="chatCurrentMeta">Choose an employee from the list.</span>
+            </div>
+          </div>
+          <button type="button" class="btn ghost" id="closeMessengerBtn">Close</button>
+        </div>
+        <div id="chatThread" class="chat-thread"></div>
+        <form id="chatForm" class="chat-form">
+          <label class="chat-clip-btn" title="Upload file">&#128206;<input id="chatFileInput" type="file" /></label>
+          <textarea id="chatMessageInput" rows="2" placeholder="Type a message..."></textarea>
+          <button type="submit" class="btn primary submit-btn"><img src="logo/submit.png" alt="" /><span>Send</span></button>
+          <span id="chatSelectedFile" class="chat-file-name">No file selected</span>
+        </form>
+      </section>
     </div>
   </dialog>
 
