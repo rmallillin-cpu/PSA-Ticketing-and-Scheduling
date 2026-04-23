@@ -185,6 +185,14 @@ async function startDashboard() {
   window.addEventListener("focus", () => {
     renderAllData();
   });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      highlightActiveTab();
+      applyPageKindLayout();
+      renderAllData();
+    }
+  });
 }
 
 function forceCloudStatusResolution() {
