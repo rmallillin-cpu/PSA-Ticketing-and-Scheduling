@@ -468,10 +468,25 @@ function applyPageKindLayout() {
     el.announcementFeed.parentElement.classList.toggle("hidden", !isDashboard);
   }
 
-  if (pageKind === "calendar") el.calendarPanelModal?.showModal();
-  if (pageKind === "ticket") el.ticketPanelModal?.showModal();
-  if (pageKind === "accomplishment") el.accompPanelModal?.showModal();
-  if (pageKind === "admin-logs") el.adminLogsPanelModal?.showModal();
+  if (pageKind === "calendar") {
+    mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
+  }
+  if (pageKind === "ticket") {
+    mountStandalonePanel(el.ticketPanelModal, el.closeTicketPanelBtn);
+  }
+  if (pageKind === "accomplishment") {
+    mountStandalonePanel(el.accompPanelModal, el.closeAccompPanelBtn);
+  }
+  if (pageKind === "admin-logs") {
+    mountStandalonePanel(el.adminLogsPanelModal, el.closeAdminLogsPanelBtn);
+  }
+}
+
+function mountStandalonePanel(modal, closeBtn) {
+  if (!modal) return;
+  modal.classList.add("standalone-panel");
+  modal.setAttribute("open", "open");
+  if (closeBtn) closeBtn.classList.add("hidden");
 }
 
 function applyAdminTabVisibility() {

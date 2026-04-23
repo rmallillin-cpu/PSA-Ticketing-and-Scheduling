@@ -1218,6 +1218,24 @@ th {
   border-radius: 14px;
 }
 
+.standalone-panel {
+  position: static;
+  margin: 0;
+  width: calc(100% - (320px + 0.7in));
+  max-width: none;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.standalone-panel .modal-body {
+  background: var(--card);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
 .calendar-view-modal-body {
   gap: 12px;
 }
@@ -1375,5 +1393,9 @@ th {
     right: 0.4in;
     top: auto;
     bottom: 10px;
+  }
+
+  .standalone-panel {
+    width: 100%;
   }
 }
