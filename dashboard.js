@@ -1067,8 +1067,7 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
     const key = formatDateKey(year, month + 1, day);
     const dayEvents = events.filter((event) => event.date === key);
 
-    const cell = document.createElement("button");
-    cell.type = "button";
+    const cell = document.createElement("div");
     cell.className = "cal-cell";
     if (key === todayKey) cell.classList.add("today");
     cell.innerHTML = `<div class="day-number">${day}</div>`;
@@ -1079,6 +1078,13 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
       const statusLabel = event.status === "approved" ? "Approved" : event.status === "re-sched" ? "Re-Sched" : "Pending";
       badge.textContent = `${event.title} (${statusLabel})`;
       badge.title = `${event.title} - ${event.ownerName} - ${event.cityAssigned || "-"} - ${statusLabel}`;
+      
+      // Click badge to EDIT specific event
+      badge.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openEventModal(key, event.id);
+      });
+      
       cell.appendChild(badge);
     });
 
@@ -1089,7 +1095,8 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
       cell.appendChild(more);
     }
 
-    cell.addEventListener("click", () => openEventModal(key));
+    // Click cell background to ADD NEW event
+    cell.addEventListener("click", () => openEventModal(key, null));
     cell.addEventListener("mouseenter", () => renderDailyScheduleTable(key));
     targetGrid.appendChild(cell);
   }
@@ -1140,8 +1147,8 @@ function renderDailyScheduleTable(dateKey) {
   });
 }
 
-function openEventModal(dateKey) {
-  const event = getEvents().find((e) => e.date === dateKey && e.ownerId === state.currentUser.id) || null;
+function openEventModal(dateKey, eventId = null) {
+  const event = eventId ? getEvents().find((e) => e.id === eventId) : null;
   state.editingEventId = event?.id || null;
 
   el.eventId.value = event?.id || "";
