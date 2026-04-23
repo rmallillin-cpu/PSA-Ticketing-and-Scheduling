@@ -185,6 +185,10 @@ function initDashboard() {
     return;
   }
 
+  // Modern UI Reset: Remove background logo and set clean background
+  document.body.style.backgroundImage = 'none';
+  document.body.style.backgroundColor = '#f0f2f5';
+
   state.currentUser = user;
   initializeNotificationState();
   bindEvents();
@@ -1199,11 +1203,14 @@ function renderTickets() {
   }
 
   tickets.forEach((ticket) => {
+    const progress = computeProgress(ticket);
+    const displayStatus = ticket.status === "approved" || progress === 100 ? "Completed" : ticket.status;
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${ticket.ticketNumber}</td>
       <td>${escapeHtml(ticket.subject)}</td>
-      <td><span class="status-badge status-${ticket.status}">${ticket.status}</span></td>
+      <td><div class="deadline-progress-wrap"><progress value="${progress}" max="100"></progress><span>${progress}%</span></div></td>
+      <td><span class="status-badge status-${ticket.status}">${displayStatus}</span></td>
       <td>${escapeHtml(ticket.signatoryName || "-")}</td>
       <td>${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
       <td></td>
@@ -1237,6 +1244,21 @@ function makeAction(label, handler, disabled = false) {
   return button;
 }
 
+function computeProgress(ticket) {
+  if (ticket.status === "approved") return 100;
+  if (!ticket.deadline) return 35;
+
+  const start = new Date(ticket.createdAt).getTime();
+  const end = new Date(ticket.deadline).getTime();
+  const now = Date.now();
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 35;
+  if (now >= end) return 100;
+
+  const ratio = ((now - start) / (end - start)) * 100;
+  return Math.max(0, Math.min(100, Math.round(ratio)));
+}
+
 function setTicketStatus(ticketId, status) {
   const tickets = getTickets();
   const idx = tickets.findIndex((ticket) => ticket.id === ticketId);
@@ -1254,7 +1276,8 @@ function setTicketStatus(ticketId, status) {
   renderTickets();
   renderAdminLogs();
   if (state.activeTicketId === ticketId) renderTicketModal(ticketId);
-  notify(`Ticket status set to ${status}.`, "success");
+  const msg = status === "approved" ? "Ticket marked as Completed!" : `Ticket status set to ${status}.`;
+  notify(msg, "success");
 }
 
 function deleteTicket(ticketId) {
@@ -1292,6 +1315,8 @@ function renderTicketModal(ticketId) {
   const ticket = getTickets().find((item) => item.id === ticketId);
   if (!ticket) return;
 
+  const displayStatus = ticket.status === "approved" ? "Completed" : ticket.status;
+
   el.ticketDetailsContainer.innerHTML = `
     <p><strong>Ticket #:</strong> ${ticket.ticketNumber}</p>
     <p><strong>Employee:</strong> ${escapeHtml(ticket.employeeName)}</p>
@@ -1300,7 +1325,7 @@ function renderTicketModal(ticketId) {
     <p><strong>Position:</strong> ${escapeHtml(ticket.position)}</p>
     <p><strong>Subject:</strong> ${escapeHtml(ticket.subject)}</p>
     <p><strong>Deadline:</strong> ${escapeHtml(ticket.deadline || "-")}</p>
-    <p><strong>Status:</strong> <span class="status-badge status-${ticket.status}">${ticket.status}</span></p>
+    <p><strong>Status:</strong> <span class="status-badge status-${ticket.status}">${displayStatus}</span></p>
     <p><strong>Signatory:</strong> ${escapeHtml(ticket.signatoryName || "-")}</p>
     <p><strong>Details:</strong> ${escapeHtml(ticket.details)}</p>
     <p><strong>Main File:</strong> ${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">${escapeHtml(ticket.attachmentName || "Download")}</a>` : "None"}</p>
