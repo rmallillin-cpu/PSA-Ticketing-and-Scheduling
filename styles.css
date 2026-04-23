@@ -479,11 +479,19 @@ textarea:focus {
   padding: 6px 8px;
   cursor: pointer;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
   text-align: left;
   line-height: 1.2;
-  overflow: hidden;
+  overflow: visible;
+  min-height: 30px;
+}
+
+.left-tab-btn span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  flex: 1 1 auto;
 }
 
 .menu-icon {
