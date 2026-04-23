@@ -159,17 +159,43 @@ async function startDashboard() {
   // Initialize UI safely first
   highlightActiveTab();
   applyPageKindLayout(); 
+  forceCloudStatusResolution();
   
   initDashboard(); // Initialize UI with local data immediately
 
-  bootstrapCloudState().then(() => {
-    // Refresh after cloud sync
-    renderAllData();
-  });
+  bootstrapCloudState()
+    .then(() => {
+      // Refresh after cloud sync
+      renderAllData();
+    })
+    .catch(() => {
+      // Keep running in local mode if cloud bootstrap fails
+    })
+    .finally(() => {
+      renderCloudSyncStatus();
+    });
 
   startCloudPolling(() => {
     renderAllData();
   }, 2000);
+}
+
+function forceCloudStatusResolution() {
+  if (!el.cloudSyncStatus) return;
+  setTimeout(() => {
+    if (!el.cloudSyncStatus) return;
+    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
+      renderCloudSyncStatus();
+    }
+  }, 1200);
+  setTimeout(() => {
+    if (!el.cloudSyncStatus) return;
+    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
+      el.cloudSyncStatus.textContent = "Cloud sync: offline (local-only)";
+      el.cloudSyncStatus.classList.remove("online");
+      el.cloudSyncStatus.classList.add("offline");
+    }
+  }, 3500);
 }
 
 function renderAllData() {
@@ -428,7 +454,12 @@ function bindHeader() {
 
 function renderCloudSyncStatus() {
   if (!el.cloudSyncStatus) return;
-  const stateInfo = getCloudSyncState();
+  let stateInfo = { connected: false };
+  try {
+    stateInfo = getCloudSyncState();
+  } catch {
+    stateInfo = { connected: false };
+  }
   if (stateInfo.connected) {
     el.cloudSyncStatus.textContent = "Cloud sync: connected";
     el.cloudSyncStatus.classList.remove("offline");
