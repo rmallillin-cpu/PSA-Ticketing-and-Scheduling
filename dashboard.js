@@ -1330,7 +1330,8 @@ function renderTickets() {
         <td>${escapeHtml(ticket.subject)}</td>
         <td><div class="deadline-progress-wrap"><progress value="${progress}" max="100"></progress><span>${progress}%</span></div></td>
         <td><span class="status-badge status-${ticket.status}">${displayStatus}</span></td>
-        <td>${escapeHtml(formatDisplayName(ticket.signatoryName || "-"))}</td>ttachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
+        <td>${escapeHtml(formatDisplayName(ticket.signatoryName || "-"))}</td>
+        <td>${ticket.attachment ? `<a href="${ticket.attachment}" download="${ticket.attachmentName || "file"}">Download</a>` : "-"}</td>
         <td></td>
       `;
 
