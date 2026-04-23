@@ -34,6 +34,93 @@ let cloudWarned = false;
 let cloudConnected = false;
 const CLOUD_SETUP_HINT = "Cloud sync is offline. Run supabase-setup.sql in Supabase SQL Editor and refresh.";
 
+function canUseCloudApi() {
+  return !!supabaseClient || typeof fetch === "function";
+}
+
+async function cloudSelectPortalState(columns = "updated_at,data") {
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .select(columns)
+      .eq("id", CLOUD_STATE_ROW_ID)
+      .single();
+    if (error) throw new Error(error.message || "Cloud select failed.");
+    return data || null;
+  }
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`,
+    {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+  }
+
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] || null : rows || null;
+}
+
+async function cloudUpsertPortalState(row, selectColumns = "") {
+  if (supabaseClient) {
+    let query = supabaseClient
+      .from(CLOUD_STATE_TABLE)
+      .upsert(row, { onConflict: "id" });
+    if (selectColumns) query = query.select(selectColumns).single();
+    const { data, error } = await query;
+    if (error) throw new Error(error.message || "Cloud upsert failed.");
+    return data || null;
+  }
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${CLOUD_STATE_TABLE}?on_conflict=id`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: `resolution=merge-duplicates,return=${selectColumns ? "representation" : "minimal"}`
+      },
+      body: JSON.stringify([row])
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error((await response.text()) || CLOUD_SETUP_HINT);
+  }
+
+  if (!selectColumns) return null;
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows[0] || null : rows || null;
+}
+
+function getLocalPortalStateSnapshot() {
+  const snapshot = {};
+  CLOUD_SYNC_KEYS.forEach((key) => {
+    snapshot[key] = getParsedStorageValue(key);
+  });
+  return snapshot;
+}
+
+function hasMeaningfulPortalData(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  return CLOUD_SYNC_KEYS.some((key) => {
+    const value = payload[key];
+    if (key === STORAGE_KEYS.ticketCounter) return Number(value || 0) > 1;
+    if (Array.isArray(value)) return value.length > 0;
+    return !!value && typeof value === "object" && Object.keys(value).length > 0;
+  });
+}
+
 const DEPARTMENTS = [
   "Statistical & Technical",
   "Civil Registration & Operations",
@@ -300,7 +387,7 @@ function formatDisplayName(fullname) {
 }
 
 async function bootstrapCloudState() {
-  if (!supabaseClient || cloudBusy) {
+  if (!canUseCloudApi() || cloudBusy) {
     warnCloudOnce("Supabase client not available. Running local-only mode.");
     cloudConnected = false;
     return false;
@@ -309,28 +396,44 @@ async function bootstrapCloudState() {
   cloudBusy = true;
   try {
     await ensureCloudRow();
-    const { data, error } = await supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .select("updated_at, data")
-      .eq("id", CLOUD_STATE_ROW_ID)
-      .single();
+    const data = await cloudSelectPortalState("updated_at,data");
 
-    if (error || !data) {
-      warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+    if (!data) {
+      warnCloudOnce(CLOUD_SETUP_HINT);
       cloudConnected = false;
       return false;
     }
+
+    const localPayload = getLocalPortalStateSnapshot();
+    const remotePayload = data.data || {};
+    const mergedPayload = hasMeaningfulPortalData(remotePayload)
+      ? mergePortalState(remotePayload, localPayload)
+      : mergePortalState(localPayload, remotePayload);
+
     cloudUpdatedAt = data.updated_at || "";
-    hydrateLocalStorageFromCloud(data.data || {});
+    hydrateLocalStorageFromCloud(mergedPayload);
     cloudConnected = true;
+    if (JSON.stringify(mergedPayload) !== JSON.stringify(remotePayload)) {
+      await cloudUpsertPortalState(
+        {
+          id: CLOUD_STATE_ROW_ID,
+          data: mergedPayload
+        },
+        "updated_at"
+      );
+    }
     return true;
+  } catch (error) {
+    warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+    cloudConnected = false;
+    return false;
   } finally {
     cloudBusy = false;
   }
 }
 
 function startCloudPolling(onUpdate, intervalMs = 8000) {
-  if (!supabaseClient) return;
+  if (!canUseCloudApi()) return;
   if (cloudPollingTimer) clearInterval(cloudPollingTimer);
 
   cloudPollingTimer = setInterval(async () => {
@@ -345,7 +448,7 @@ function stopCloudPolling() {
 }
 
 function scheduleCloudPush(delayMs = 350) {
-  if (!supabaseClient) return;
+  if (!canUseCloudApi()) return;
   if (cloudPushTimer) clearTimeout(cloudPushTimer);
   cloudPushTimer = setTimeout(() => {
     void pushCloudState();
@@ -353,84 +456,56 @@ function scheduleCloudPush(delayMs = 350) {
 }
 
 async function ensureCloudRow() {
-  if (!supabaseClient) return;
-  const defaults = {};
-  CLOUD_SYNC_KEYS.forEach((key) => {
-    defaults[key] = getParsedStorageValue(key);
-  });
-
-  const { error } = await supabaseClient
-    .from(CLOUD_STATE_TABLE)
-    .upsert(
-      {
-        id: CLOUD_STATE_ROW_ID,
-        data: defaults
-      },
-      { onConflict: "id" }
-    );
-
-  if (error) {
+  if (!canUseCloudApi()) return;
+  try {
+    await cloudUpsertPortalState({
+      id: CLOUD_STATE_ROW_ID,
+      data: getLocalPortalStateSnapshot()
+    });
+  } catch (error) {
     console.warn("Supabase init row error:", error.message);
     warnCloudOnce(error.message || CLOUD_SETUP_HINT);
   }
 }
 
 async function pushCloudState() {
-  if (!supabaseClient || cloudBusy) return;
+  if (!canUseCloudApi() || cloudBusy) return;
   cloudBusy = true;
   try {
-    const localPayload = {};
-    CLOUD_SYNC_KEYS.forEach((key) => {
-      localPayload[key] = getParsedStorageValue(key);
-    });
-
-    const { data: remoteRow } = await supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .select("data")
-      .eq("id", CLOUD_STATE_ROW_ID)
-      .single();
+    const localPayload = getLocalPortalStateSnapshot();
+    const remoteRow = await cloudSelectPortalState("data");
 
     const remotePayload = remoteRow?.data || {};
     const payload = mergePortalState(remotePayload, localPayload);
 
-    const { data, error } = await supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .upsert(
-        {
-          id: CLOUD_STATE_ROW_ID,
-          data: payload
-        },
-        { onConflict: "id" }
-      )
-      .select("updated_at")
-      .single();
+    const data = await cloudUpsertPortalState(
+      {
+        id: CLOUD_STATE_ROW_ID,
+        data: payload
+      },
+      "updated_at"
+    );
 
-    if (error) {
-      console.warn("Supabase push error:", error.message);
-      warnCloudOnce(error.message || CLOUD_SETUP_HINT);
-      cloudConnected = false;
-      return;
-    }
     cloudUpdatedAt = data?.updated_at || cloudUpdatedAt;
     hydrateLocalStorageFromCloud(payload);
     cloudConnected = true;
+  } catch (error) {
+    console.warn("Supabase push error:", error.message);
+    warnCloudOnce(error.message || CLOUD_SETUP_HINT);
+    cloudConnected = false;
   } finally {
     cloudBusy = false;
   }
 }
 
 async function pullCloudStateIfNewer() {
-  if (!supabaseClient || cloudBusy) return false;
+  if (!canUseCloudApi() || cloudBusy) return false;
   cloudBusy = true;
   try {
-    const { data, error } = await supabaseClient
-      .from(CLOUD_STATE_TABLE)
-      .select("updated_at, data")
-      .eq("id", CLOUD_STATE_ROW_ID)
-      .single();
+    const data = await cloudSelectPortalState("updated_at,data");
 
-    if (error || !data) {
-      warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+    if (!data) {
+      warnCloudOnce(CLOUD_SETUP_HINT);
       cloudConnected = false;
       return false;
     }
@@ -440,9 +515,14 @@ async function pullCloudStateIfNewer() {
     if (incoming && cloudUpdatedAt && incoming === cloudUpdatedAt) return false;
     
     cloudUpdatedAt = incoming;
-    hydrateLocalStorageFromCloud(data.data || {});
+    const mergedPayload = mergePortalState(data.data || {}, getLocalPortalStateSnapshot());
+    hydrateLocalStorageFromCloud(mergedPayload);
     cloudConnected = true;
     return true;
+  } catch (error) {
+    warnCloudOnce(error?.message || CLOUD_SETUP_HINT);
+    cloudConnected = false;
+    return false;
   } finally {
     cloudBusy = false;
   }

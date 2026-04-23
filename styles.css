@@ -1655,25 +1655,6 @@ table tbody tr:hover td {
   border-radius: 14px;
 }
 
-.standalone-panel {
-  position: static;
-  margin: 0;
-  grid-column: 1;
-  width: 100%;
-}
-
-.standalone-panel .modal-body {
-  background: var(--card);
-  border-color: var(--line);
-  box-shadow: var(--shadow);
-}
-
-.module-page-host {
-  grid-column: 1;
-  width: 100%;
-  min-height: 80vh;
-}
-
 .calendar-view-modal-body {
   gap: 12px;
 }
@@ -1864,11 +1845,4 @@ table tbody tr:hover td {
     max-width: 92%;
   }
 
-  .standalone-panel {
-    width: 100%;
-  }
-
-  .module-page-host {
-    width: 100%;
-  }
 }

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260423o" />
+  <link rel="stylesheet" href="styles.css?v=20260423q" />
 </head>
 <body data-page-kind="admin-logs">
   <div id="toastContainer" class="toast-container"></div>
@@ -51,7 +51,7 @@
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
-    <section class="card module-page admin-logs-section">
+    <section id="adminLogsSection" class="card module-page admin-logs-section">
       <div class="section-title-row table-head-row">
         <div class="module-heading">
           <span class="module-kicker">Administration</span>
@@ -89,61 +89,6 @@
     </section>
   </main>
 
-  <dialog id="announcementModal" class="modal">
-    <form method="dialog" id="announcementForm" class="modal-body announcement-form form-two-col" autocomplete="on">
-      <div class="section-title-row table-head-row form-full">
-        <h3>Post announcement</h3>
-        <button type="button" class="btn tiny ghost" id="closeAnnouncementModalBtn">Close</button>
-      </div>
-      <label>Name
-        <input type="text" id="announcementName" readonly />
-      </label>
-      <label>Department
-        <input type="text" id="announcementDepartment" readonly />
-      </label>
-      <label>Date
-        <input type="date" id="announcementDate" readonly />
-      </label>
-      <label class="form-full">Post a message
-        <textarea id="announcementMessage" rows="3"></textarea>
-      </label>
-      <label>Upload file
-        <input type="file" id="announcementFile" />
-      </label>
-      <button type="submit" class="btn tiny secondary form-full">Post announcement</button>
-    </form>
-  </dialog>
-
-  <dialog id="adminLogsPanelModal" class="modal wide">
-    <div id="adminLogsSection" class="modal-body hidden">
-      <div class="section-title-row table-head-row">
-        <h3>Admin dashboard logs</h3>
-        <button id="closeAdminLogsPanelBtn" class="btn tiny ghost" type="button">Close</button>
-      </div>
-      <div class="status-filters">
-        <select id="adminDepartmentFilter"><option value="">All departments</option></select>
-        <input id="adminNameFilter" type="text" placeholder="Filter by name (Last, First, M.)" />
-      </div>
-      <div class="log-tabs">
-        <button id="tabScheduleBtn" class="btn tiny active-tab" type="button">Schedule</button>
-        <button id="tabTicketBtn" class="btn tiny" type="button">Ticket</button>
-        <button id="tabAccompBtn" class="btn tiny" type="button">Accomplishment report</button>
-      </div>
-      <section id="panelSchedule" class="log-panel">
-        <div class="section-title-row table-head-row"><h4>Schedule of all employees</h4><button id="printScheduleLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>EMPLOYEE</th><th>DEPARTMENT</th><th>DATE</th><th>ACTIVITY</th><th>CITY/MUNICIPALITY</th><th>STATUS</th></tr></thead><tbody id="adminScheduleTableBody"></tbody></table></div>
-      </section>
-      <section id="panelTicket" class="log-panel hidden">
-        <div class="section-title-row table-head-row"><h4>Tickets status for all employees</h4><button id="printTicketLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>TICKET #</th><th>EMPLOYEE</th><th>DEPARTMENT</th><th>SUBJECT</th><th>STATUS</th><th>UPDATED</th></tr></thead><tbody id="adminTicketsTableBody"></tbody></table></div>
-      </section>
-      <section id="panelAccomp" class="log-panel hidden">
-        <div class="section-title-row table-head-row"><h4>Accomplishment report status for all employees</h4><button id="printAccompLogBtn" class="btn tiny secondary" type="button">Print</button></div>
-        <div class="table-wrap"><table><thead><tr><th>EMPLOYEE</th><th>DEPARTMENT</th><th>ACTIVITY/TITLE</th><th>DATE</th><th>TIME IN</th><th>TIME OUT</th><th>STATUS</th><th>FILE</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
-      </section>
-    </div>
-  </dialog>
-
   <dialog id="messengerModal" class="modal chat-popup">
     <div class="modal-body chat-popup-body">
       <aside class="chat-sidebar-pane">
@@ -177,8 +122,8 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="common.js?v=20260423o"></script>
-  <script src="dashboard.js?v=20260423o"></script>
+  <script src="common.js?v=20260423q"></script>
+  <script src="dashboard.js?v=20260423q"></script>
 </body>
 </html>
 

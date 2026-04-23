@@ -269,12 +269,13 @@ function bindEvents() {
   
   if (el.openTicketEntryBtn) {
     el.openTicketEntryBtn.addEventListener("click", () => {
-      if (el.ticketEntryModal) {
-        el.ticketEntryModal.showModal();
+      if (document.body.dataset.pageKind === "ticket") {
+        el.ticketForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.ticketSubject?.focus();
         return;
       }
-      if (el.ticketPanelModal && document.body.dataset.pageKind === "ticket") {
-        el.ticketPanelModal.showModal();
+      if (el.ticketEntryModal) {
+        el.ticketEntryModal.showModal();
         return;
       }
       el.ticketForm?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -283,6 +284,11 @@ function bindEvents() {
   }
   if (el.openAccompEntryBtn) {
     el.openAccompEntryBtn.addEventListener("click", () => {
+      if (document.body.dataset.pageKind === "accomplishment") {
+        el.accomplishmentForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.accompActivity?.focus();
+        return;
+      }
       if (el.accompEntryModal) {
         el.accompEntryModal.showModal();
         return;
@@ -630,45 +636,6 @@ function applyPageKindLayout() {
   }
 
   // Content is now directly in main section for each page
-}
-
-function mountStandalonePanel(modal, closeBtn) {
-  if (!modal) return;
-  const pageKind = document.body.dataset.pageKind || "dashboard";
-  if (pageKind === "dashboard") return;
-
-  const body = modal.querySelector(".modal-body");
-  if (!body) return;
-
-  // Don't re-mount if it's already there
-  let host = document.getElementById("pageModuleHost");
-  if (host && host.contains(body)) return;
-
-  if (!host) {
-    host = document.createElement("section");
-    host.id = "pageModuleHost";
-    host.className = "card module-page-host redesign-clean-card";
-    const shell = document.querySelector(".social-shell");
-    const aside = document.querySelector(".employee-corner");
-    if (shell && aside) {
-      shell.insertBefore(host, aside.nextSibling);
-    } else {
-      document.body.appendChild(host);
-    }
-  }
-
-  if (!host.contains(body)) {
-    host.innerHTML = "";
-    host.appendChild(body);
-  }
-
-  // Ensure the body is visible even if the modal was hidden
-  body.classList.remove("hidden");
-  body.style.display = "block";
-
-  // The modal itself is hidden by CSS when its content is moved.
-  // No need to explicitly close it here.
-  // if (closeBtn) closeBtn.classList.add("hidden"); // This is now redundant
 }
 
 function applyAdminTabVisibility() {
@@ -1242,6 +1209,16 @@ function renderUnreadAlert() {
 function renderCalendar() {
   if (!el.calendarGrid || !el.calendarMonth) return;
   renderCalendarGrid(el.calendarGrid, el.calendarMonth, false);
+
+  if (el.dailyScheduleTableBody && el.dailyScheduleContainer) {
+    const monthKey = `${state.calendarDate.getFullYear()}-${String(state.calendarDate.getMonth() + 1).padStart(2, "0")}-`;
+    const events = getEvents()
+      .filter((event) => String(event.date || "").startsWith(monthKey))
+      .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    const todayKey = localDateKey(new Date());
+    const defaultDate = events.find((event) => event.date === todayKey)?.date || events[0]?.date || todayKey;
+    renderDailyScheduleTable(defaultDate);
+  }
 }
 
 function renderCalendarView() {
