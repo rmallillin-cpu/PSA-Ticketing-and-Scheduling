@@ -120,6 +120,128 @@
     </div>
   </dialog>
 
+  <dialog id="ticketPanelModal" class="modal wide">
+    <div class="modal-body">
+      <div class="section-title-row table-head-row">
+        <h3>Tickets</h3>
+        <div class="calendar-nav">
+          <button id="openTicketEntryBtn" class="btn tiny primary">Create New Ticket</button>
+          <button id="closeTicketPanelBtn" class="btn tiny ghost" type="button">Close</button>
+        </div>
+      </div>
+
+      <div class="section-title-row table-head-row">
+        <h4>Queued Tickets</h4>
+        <div class="status-filters">
+          <input id="ticketSearch" type="text" placeholder="Search ticket #/subject/status/signatory" />
+          <input id="ticketSenderSearch" type="text" placeholder="Search sender name" />
+          <select id="ticketGroupSelect">
+            <option value="">No Grouping</option>
+            <option value="status">Group by Status</option>
+            <option value="signatoryName">Group by Signatory</option>
+          </select>
+        </div>
+        <button id="printUserTicketsBtn" class="btn tiny secondary" type="button">Print</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ticket #</th><th>Subject</th><th>Progress</th><th>Status</th><th>Signatory</th><th>File</th><th>Actions</th></tr></thead>
+          <tbody id="ticketsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="accompPanelModal" class="modal wide">
+    <div class="modal-body">
+      <div class="section-title-row table-head-row">
+        <h3>Accomplishment Reports</h3>
+        <div class="calendar-nav">
+          <button id="openAccompEntryBtn" class="btn tiny primary">Submit New Report</button>
+          <button id="closeAccompPanelBtn" class="btn tiny ghost" type="button">Close</button>
+          <select id="accompGroupSelect">
+            <option value="">No Grouping</option>
+            <option value="date">Group by Date</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Date</th><th>Activity/Title</th><th>File</th></tr></thead>
+          <tbody id="accomplishmentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="adminLogsPanelModal" class="modal wide">
+    <div id="adminLogsSection" class="modal-body hidden">
+      <div class="section-title-row table-head-row">
+        <h3>Admin dashboard logs</h3>
+        <button id="closeAdminLogsPanelBtn" class="btn tiny ghost" type="button">Close</button>
+      </div>
+      <div id="adminStatsSummary" class="stats-row"></div>
+      <div class="status-filters">
+        <select id="adminDepartmentFilter"><option value="">All departments</option></select>
+        <input id="adminNameFilter" type="text" placeholder="Filter by name (Last, First, M.)" />
+        <select id="adminGroupSelect">
+          <option value="">No Grouping</option>
+          <option value="department">Group by Department</option>
+          <option value="status">Group by Status</option>
+        </select>
+      </div>
+      <div class="log-tabs">
+        <button id="tabScheduleBtn" class="btn tiny active-tab" type="button">Schedules</button>
+        <button id="tabTicketBtn" class="btn tiny" type="button">Ticket</button>
+        <button id="tabAccompBtn" class="btn tiny" type="button">Accomplishment Reports</button>
+      </div>
+      <section id="panelSchedule" class="log-panel">
+        <div class="section-title-row table-head-row"><h4>Schedule of all employees</h4><button id="printScheduleLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Activity</th><th>City/Municipality</th><th>Status</th></tr></thead><tbody id="adminScheduleTableBody"></tbody></table></div>
+      </section>
+      <section id="panelTicket" class="log-panel hidden">
+        <div class="section-title-row table-head-row"><h4>Tickets status for all employees</h4><button id="printTicketLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Ticket #</th><th>Employee</th><th>Department</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody id="adminTicketsTableBody"></tbody></table></div>
+      </section>
+      <section id="panelAccomp" class="log-panel hidden">
+        <div class="section-title-row table-head-row"><h4>Accomplishment report status for all employees</h4><button id="printAccompLogBtn" class="btn tiny secondary" type="button">Print</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Department</th><th>Activity/Title</th><th>Date</th><th>Time In</th><th>Time Out</th><th>Status</th><th>File</th></tr></thead><tbody id="adminAccomplishmentTableBody"></tbody></table></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="ticketEntryModal" class="modal">
+    <form id="ticketForm" class="modal-body ticket-form form-two-col">
+      <div class="section-title-row form-full"><h3>Submit New Ticket</h3></div>
+      <label>Ticket number<input type="text" id="ticketNumber" readonly /></label>
+      <label>Department<input type="text" id="ticketDepartment" readonly /></label>
+      <label>Position<input type="text" id="ticketPosition" readonly /></label>
+      <label>Subject<input type="text" id="ticketSubject" required /></label>
+      <label>Deadline<input type="date" id="ticketDeadline" required /></label>
+      <label class="form-full">Details<textarea id="ticketDetails" rows="3" required></textarea></label>
+      <label>Signatory<select id="ticketSignatory" required></select></label>
+      <label>Upload file<input type="file" id="ticketAttachment" /></label>
+      <div class="modal-actions form-full">
+        <button type="button" class="btn ghost" onclick="document.getElementById('ticketEntryModal').close()">Cancel</button>
+        <button type="submit" class="btn primary submit-btn">Submit Ticket</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="accompEntryModal" class="modal">
+    <form id="accomplishmentForm" class="modal-body ticket-form accomplishment-form form-two-col">
+      <div class="section-title-row form-full"><h3>Submit Accomplishment Report</h3></div>
+      <label>Name<input type="text" id="accompName" readonly /></label>
+      <label>Date<input type="date" id="accompDate" readonly /></label>
+      <label>Activity / Title<input type="text" id="accompActivity" required /></label>
+      <label>Upload file<input type="file" id="accompFile" required /></label>
+      <div class="modal-actions form-full">
+        <button type="button" class="btn ghost" onclick="document.getElementById('accompEntryModal').close()">Cancel</button>
+        <button type="submit" class="btn primary submit-btn">Submit Report</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="eventModal" class="modal">
     <form method="dialog" class="modal-body form-two-col" id="eventForm">
       <h3 id="eventModalTitle" class="form-full">Add / Edit event</h3>

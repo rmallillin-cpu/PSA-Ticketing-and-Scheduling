@@ -160,35 +160,41 @@ async function startDashboard() {
   highlightActiveTab();
   applyPageKindLayout(); 
   
-  // Then attempt async cloud sync
-  await bootstrapCloudState();
-  initDashboard();
-  startCloudPolling(() => {
-    const previousUnread = state.lastUnreadCount;
-    const previousAnnouncement = state.lastAnnouncementAt;
-    const refreshedUser = getCurrentUser();
-    if (!refreshedUser) {
-      window.location.href = "login.html";
-      return;
-    }
-    state.currentUser = refreshedUser;
-    bindHeader();
-    renderCalendar();
-    renderCalendarView();
-    renderTickets();
-    renderAccomplishments();
-    renderAdminLogs();
-    renderAnnouncements();
-    initMessenger();
+  initDashboard(); // Initialize UI with local data immediately
 
-    const unreadNow = getUnreadMessageCount(getChats(), state.currentUser?.id, state.currentUser?.username);
-    const announcementNow = getLatestAnnouncementAt(buildPublicFeedItems());
-    if (unreadNow > previousUnread || (announcementNow && announcementNow > previousAnnouncement)) {
-      playNotificationSound();
-    }
-    state.lastUnreadCount = unreadNow;
-    state.lastAnnouncementAt = announcementNow;
+  bootstrapCloudState().then(() => {
+    // Refresh after cloud sync
+    renderAllData();
+  });
+
+  startCloudPolling(() => {
+    renderAllData();
   }, 2000);
+}
+
+function renderAllData() {
+  const previousUnread = state.lastUnreadCount;
+  const previousAnnouncement = state.lastAnnouncementAt;
+  const refreshedUser = getCurrentUser();
+  if (!refreshedUser) return;
+
+  state.currentUser = refreshedUser;
+  bindHeader();
+  renderCalendar();
+  renderCalendarView();
+  renderTickets();
+  renderAccomplishments();
+  renderAdminLogs();
+  renderAnnouncements();
+  initMessenger();
+
+  const unreadNow = getUnreadMessageCount(getChats(), state.currentUser?.id, state.currentUser?.username);
+  const announcementNow = getLatestAnnouncementAt(buildPublicFeedItems());
+  if (unreadNow > previousUnread || (announcementNow && announcementNow > previousAnnouncement)) {
+    playNotificationSound();
+  }
+  state.lastUnreadCount = unreadNow;
+  state.lastAnnouncementAt = announcementNow;
 }
 
 function initDashboard() {
@@ -226,6 +232,7 @@ function initDashboard() {
 function bindEvents() {
   window.addEventListener("storage", handleStorageUpdate);
 
+  // Added null checks to prevent script crashes on multi-page layout
   if (el.openCalendarPanelBtn) bindPanelLauncher(el.openCalendarPanelBtn, el.calendarPanelModal, "calendar");
   if (el.openTicketPanelBtn) bindPanelLauncher(el.openTicketPanelBtn, el.ticketPanelModal, "ticket");
   if (el.openAccompPanelBtn) bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");

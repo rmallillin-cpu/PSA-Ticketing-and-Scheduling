@@ -47,7 +47,6 @@
         <button id="logoutBtn" class="left-tab-btn logout-text-btn" type="button"><span>Logout</span></button>
       </div>
       <div class="employee-nav-title">Employees</div>
-      <input id="employeeSearchInput" type="text" placeholder="Search employees..." class="sidebar-search" />
       <div id="employeeNameList" class="employee-name-list"></div>
     </aside>
 
@@ -84,6 +83,26 @@
       </label>
       <button type="submit" class="btn tiny secondary form-full">Post announcement</button>
     </form>
+  </dialog>
+
+  <dialog id="calendarPanelModal" class="modal wide">
+    <div class="modal-body">
+      <div class="section-title-row table-head-row">
+        <h3>Schedule calendar</h3>
+        <div class="calendar-nav">
+          <button id="prevMonth" class="btn tiny">Prev</button>
+          <span id="calendarMonth"></span>
+          <button id="nextMonth" class="btn tiny">Next</button>
+          <button id="openCalendarViewBtn" class="btn tiny secondary">View calendar</button>
+          <button id="closeCalendarPanelBtn" class="btn tiny ghost" type="button">Close</button>
+        </div>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <div class="calendar-legend">
+        <span><i class="dot mine"></i>Your event</span>
+        <span><i class="dot shared"></i>Assigned event</span>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="ticketPanelModal" class="modal wide">
