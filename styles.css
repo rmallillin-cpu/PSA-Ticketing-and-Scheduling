@@ -679,13 +679,49 @@ body[data-page-kind="dashboard"] a[href="dashboard.html"] {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 20px;
+  padding: 22px;
 }
 
 .module-page {
   width: 100%;
   padding: 22px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 246, 255, 0.88));
+}
+
+.social-shell > section.card {
+  grid-column: 1;
+  align-self: start;
+  min-height: calc(100vh - 150px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-section,
+.module-page,
+.calendar-section,
+.ticket-section,
+.accomplishment-section,
+.admin-logs-section {
+  width: 100%;
+  max-width: none;
+}
+
+.announcement-section,
+.module-page {
+  border-radius: var(--radius);
+}
+
+.module-page > .table-wrap,
+.module-page .table-wrap,
+.announcement-section > .announcement-feed,
+.calendar-section > .calendar-grid,
+.calendar-section > .daily-schedule-container,
+.ticket-section > .ticket-form,
+.accomplishment-section > .ticket-form,
+.admin-logs-section > .stats-row,
+.admin-logs-section > .log-panel {
+  width: 100%;
 }
 
 .module-heading {
@@ -1802,6 +1838,10 @@ table tbody tr:hover td {
 
   .social-shell {
     grid-template-columns: 1fr;
+  }
+
+  .social-shell > section.card {
+    min-height: auto;
   }
 
   .left-nav-panel {
