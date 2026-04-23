@@ -52,3 +52,24 @@ with check (id = 1);
 insert into public.portal_state (id, data)
 values (1, '{}'::jsonb)
 on conflict (id) do nothing;
+
+-- Optional cleanup: remove legacy auto-generated announcements that can duplicate
+-- ticket/schedule/accomplishment/attendance posts already built from their tables.
+update public.portal_state
+set data = jsonb_set(
+  data,
+  '{psa_announcements}',
+  coalesce(
+    (
+      select jsonb_agg(elem)
+      from jsonb_array_elements(coalesce(data->'psa_announcements', '[]'::jsonb)) elem
+      where coalesce(lower(elem->>'sourceType'), 'announcement') <> 'system'
+        and not (
+          coalesce(elem->>'message', '') ~* '^(ticket (submitted|updated|deleted)|schedule (added|updated|deleted)|accomplishment report submitted|attendance \||time-in:|time-out:)'
+        )
+    ),
+    '[]'::jsonb
+  ),
+  true
+)
+where id = 1;

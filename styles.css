@@ -703,7 +703,7 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 10px 24px rgba(8, 42, 88, 0.16);
   padding: 4px;
-  z-index: 7;
+  z-index: 60;
 }
 
 .post-menu-item {

@@ -471,20 +471,22 @@ function initMessenger() {
   el.chatEmployeeSelect.appendChild(placeholder);
 
   users.forEach((user) => {
+    const token = normalizeToken(user.username || user.id);
     const option = document.createElement("option");
-    option.value = user.id;
+    option.value = token;
     option.textContent = `${formatDisplayName(user.fullname)} [${user.employeeCode || "-"}]`;
     option.dataset.username = String(user.username || "").toLowerCase();
+    option.dataset.userId = user.id;
     el.chatEmployeeSelect.appendChild(option);
   });
 
   el.chatEmployeeSelect.disabled = false;
   el.chatForm.classList.remove("hidden");
-  const defaultChatUser = users.find((user) => user.id === previousActiveChatUserId)
+  const defaultChatUser = users.find((user) => normalizeToken(user.username || user.id) === normalizeToken(previousActiveChatUserId))
     || users.find((user) => user.id !== state.currentUser.id)
     || users[0];
-  state.activeChatUserId = defaultChatUser.id;
-  el.chatEmployeeSelect.value = defaultChatUser.id;
+  state.activeChatUserId = normalizeToken(defaultChatUser.username || defaultChatUser.id);
+  el.chatEmployeeSelect.value = state.activeChatUserId;
   renderEmployeeNameList(users);
   if (state.activeChatUserId) markConversationAsRead(state.activeChatUserId);
   renderChatThread();
@@ -494,13 +496,15 @@ function initMessenger() {
 function renderEmployeeNameList(users) {
   el.employeeNameList.innerHTML = "";
   users.forEach((user) => {
+    const token = normalizeToken(user.username || user.id);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "employee-name-btn";
     button.dataset.userId = user.id;
+    button.dataset.userToken = token;
     button.dataset.username = String(user.username || "").toLowerCase();
     button.innerHTML = `<span>${escapeHtml(formatDisplayName(user.fullname))}</span><i class=\"name-unread hidden\">0</i>`;
-    button.addEventListener("click", () => openMessengerForUser(user.id));
+    button.addEventListener("click", () => openMessengerForUser(token));
     el.employeeNameList.appendChild(button);
   });
 }
@@ -522,17 +526,6 @@ function populateSignatories() {
 
   el.ticketSignatory.innerHTML = `<option value="" disabled selected>Select signatory</option>${options}`;
   el.updateSignatory.innerHTML = options;
-}
-
-function getUserConversationToken(userId) {
-  const users = getUsers();
-  const user = users.find((item) => item.id === userId);
-  const username = String(user?.username || "").trim().toLowerCase();
-  return username || String(userId || "").trim();
-}
-
-function getLegacyConversationKey(userA, userB) {
-  return [String(userA || "").trim(), String(userB || "").trim()].sort().join("__");
 }
 
 function normalizeToken(value) {
@@ -611,15 +604,20 @@ function getUniqueChatUsers(users) {
   return Array.from(map.values()).sort((a, b) => formatDisplayName(a.fullname).localeCompare(formatDisplayName(b.fullname)));
 }
 
-function getConversationKey(userA, userB) {
-  return [getUserConversationToken(userA), getUserConversationToken(userB)].sort().join("__");
+function findUserByToken(token) {
+  const normalized = normalizeToken(token);
+  return getUsers().find((user) => {
+    const usernameToken = normalizeToken(user.username);
+    const idToken = normalizeToken(user.id);
+    return normalized === usernameToken || normalized === idToken;
+  }) || null;
 }
 
 function getConversationMessages(otherUserId) {
   const chats = getChats();
-  const otherUser = getUsers().find((user) => user.id === otherUserId);
+  const otherUser = findUserByToken(otherUserId);
   const myTokens = getConversationTokenSet(state.currentUser.id, state.currentUser.username);
-  const otherTokens = getConversationTokenSet(otherUserId, otherUser?.username);
+  const otherTokens = getConversationTokenSet(otherUser?.id || otherUserId, otherUser?.username);
   const bucket = [];
 
   Object.entries(chats).forEach(([conversationKey, messages]) => {
@@ -641,12 +639,12 @@ function getConversationMessages(otherUserId) {
 
 function setConversationMessages(otherUserId, messages) {
   const chats = getChats();
-  const otherUser = getUsers().find((user) => user.id === otherUserId);
+  const otherUser = findUserByToken(otherUserId);
   const myToken = normalizeToken(state.currentUser.username || state.currentUser.id);
-  const otherToken = normalizeToken(otherUser?.username || otherUserId);
+  const otherToken = normalizeToken(otherUser?.username || otherUser?.id || otherUserId);
   const key = [myToken, otherToken].sort().join("__");
   const myTokens = getConversationTokenSet(state.currentUser.id, state.currentUser.username);
-  const otherTokens = getConversationTokenSet(otherUserId, otherUser?.username);
+  const otherTokens = getConversationTokenSet(otherUser?.id || otherUserId, otherUser?.username);
 
   chats[key] = messages;
   Object.keys(chats).forEach((conversationKey) => {
@@ -665,7 +663,7 @@ async function sendChatMessage() {
   const file = el.chatFileInput.files[0];
   if (!receiverId || (!text && !file)) return;
 
-  const receiver = getUsers().find((user) => user.id === receiverId);
+  const receiver = findUserByToken(receiverId);
   if (!receiver) return;
   const attachmentData = file ? await fileToDataUrl(file) : "";
 
@@ -686,6 +684,11 @@ async function sendChatMessage() {
   });
 
   setConversationMessages(receiverId, messages);
+  try {
+    await pushCloudState();
+  } catch {
+    // polling can still sync later if immediate push fails
+  }
   el.chatForm.reset();
   el.chatSelectedFile.textContent = "No file selected";
   playNotificationSound();
@@ -882,7 +885,7 @@ function renderUnreadAlert() {
 
   document.querySelectorAll(".employee-name-btn").forEach((button) => {
     const badge = button.querySelector(".name-unread");
-    const token = String(button.dataset.username || button.dataset.userId || "").toLowerCase();
+    const token = String(button.dataset.userToken || button.dataset.username || button.dataset.userId || "").toLowerCase();
     const value = counts[token] || 0;
     if (!badge) return;
     if (value > 0) {
@@ -1382,16 +1385,17 @@ function renderAnnouncements() {
 
   items.forEach((item) => {
     const isManualAnnouncement = item.sourceType === "announcement";
-    const canManagePost = isManualAnnouncement && (state.currentUser.role === "admin" || item.userId === state.currentUser.id);
+    const canDeletePost = state.currentUser.role === "admin" || item.userId === state.currentUser.id;
+    const canEditPost = isManualAnnouncement && canDeletePost;
     const article = document.createElement("article");
     article.className = "announcement-item";
     article.dataset.id = item.id;
     const isImage = String(item.attachmentName || "").match(/\.(png|jpe?g|gif|webp|bmp)$/i);
-    const actionMenu = canManagePost ? `
+    const actionMenu = canDeletePost ? `
       <div class="post-menu-wrap">
         <button type="button" class="post-menu-btn" data-action="toggle-post-menu" data-id="${item.id}" aria-label="Post options">...</button>
         <div class="post-menu hidden" data-post-menu="${item.id}">
-          <button type="button" class="post-menu-item" data-action="edit-post" data-id="${item.id}">Edit</button>
+          ${canEditPost ? `<button type="button" class="post-menu-item" data-action="edit-post" data-id="${item.id}">Edit</button>` : ""}
           <button type="button" class="post-menu-item danger" data-action="delete-post" data-id="${item.id}">Delete</button>
         </div>
       </div>
@@ -1431,7 +1435,7 @@ function renderAnnouncements() {
     });
 
     article.querySelectorAll("[data-action='delete-post']").forEach((button) => {
-      button.addEventListener("click", () => deleteAnnouncement(button.getAttribute("data-id") || ""));
+      button.addEventListener("click", () => deleteFeedItem(item));
     });
 
     el.announcementFeed.appendChild(article);
@@ -1439,7 +1443,23 @@ function renderAnnouncements() {
 }
 
 function buildPublicFeedItems() {
-  const announcements = getAnnouncements().map((item) => ({
+  const systemAnnouncementPatterns = [
+    /^TICKET\s+(SUBMITTED|UPDATED|DELETED)/i,
+    /^SCHEDULE\s+(ADDED|UPDATED|DELETED)/i,
+    /^ACCOMPLISHMENT REPORT SUBMITTED/i,
+    /^ATTENDANCE\s+\|/i,
+    /^TIME-IN:/i,
+    /^TIME-OUT:/i
+  ];
+
+  const announcements = getAnnouncements()
+    .filter((item) => {
+      const sourceType = String(item.sourceType || "announcement").toLowerCase();
+      if (sourceType === "system") return false;
+      const message = String(item.message || "");
+      return !systemAnnouncementPatterns.some((pattern) => pattern.test(message));
+    })
+    .map((item) => ({
     ...item,
     sourceType: item.sourceType || "announcement",
     sourceId: item.sourceId || item.id
@@ -1533,23 +1553,6 @@ function editAnnouncement(postId) {
   notify("Post updated.", "success");
 }
 
-function deleteAnnouncement(postId) {
-  const items = getAnnouncements();
-  const target = items.find((item) => item.id === postId);
-  if (!target) return;
-
-  const canManagePost = state.currentUser.role === "admin" || target.userId === state.currentUser.id;
-  if (!canManagePost) {
-    notify("You do not have permission to delete this post.", "error");
-    return;
-  }
-
-  const updated = items.filter((item) => item.id !== postId);
-  setAnnouncements(updated);
-  renderAnnouncements();
-  notify("Post deleted.", "success");
-}
-
 function createSystemAnnouncement({ message, attachment, attachmentName }) {
   const items = getAnnouncements();
   items.push({
@@ -1561,10 +1564,66 @@ function createSystemAnnouncement({ message, attachment, attachmentName }) {
     message,
     attachment: attachment || "",
     attachmentName: attachmentName || "",
+    sourceType: "system",
     createdAt: new Date().toISOString()
   });
   setAnnouncements(items);
   renderAnnouncements();
+}
+
+function deleteFeedItem(item) {
+  if (!item || !item.sourceType) return;
+  if (state.currentUser.role !== "admin" && item.userId !== state.currentUser.id) return;
+
+  const confirmText = `Delete this ${item.sourceType} post?`;
+  if (!window.confirm(confirmText)) return;
+
+  if (item.sourceType === "announcement" || item.sourceType === "system") {
+    const items = getAnnouncements().filter((row) => row.id !== item.id);
+    setAnnouncements(items);
+    renderAnnouncements();
+    notify("Post deleted.", "success");
+    return;
+  }
+
+  if (item.sourceType === "ticket") {
+    const tickets = getTickets().filter((row) => row.id !== item.sourceId);
+    setTickets(tickets);
+    renderTickets();
+    renderAdminLogs();
+    renderAnnouncements();
+    notify("Ticket deleted.", "success");
+    return;
+  }
+
+  if (item.sourceType === "schedule") {
+    const events = getEvents().filter((row) => row.id !== item.sourceId);
+    setEvents(events);
+    renderCalendar();
+    renderCalendarView();
+    renderAdminLogs();
+    renderAnnouncements();
+    notify("Schedule deleted.", "success");
+    return;
+  }
+
+  if (item.sourceType === "accomplishment") {
+    const reports = getAccomplishments().filter((row) => row.id !== item.sourceId);
+    setAccomplishments(reports);
+    renderAccomplishments();
+    renderAdminLogs();
+    renderAnnouncements();
+    notify("Accomplishment report deleted.", "success");
+    return;
+  }
+
+  if (item.sourceType === "attendance") {
+    const attendance = getAttendance().filter((row) => row.id !== item.sourceId);
+    setAttendance(attendance);
+    renderAdminLogs();
+    renderAnnouncements();
+    notify("Attendance log deleted.", "success");
+  }
 }
 
 function initializeNotificationState() {
