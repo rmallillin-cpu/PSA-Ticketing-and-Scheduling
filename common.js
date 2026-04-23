@@ -45,6 +45,24 @@ function buildCloudRestUrl(pathAndQuery) {
   return `${SUPABASE_URL}/rest/v1/${pathAndQuery}${joiner}${SUPABASE_API_KEY_QUERY}`;
 }
 
+async function cloudFetch(pathAndQuery, options = {}, timeoutMs = 8000) {
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  try {
+    return await fetch(buildCloudRestUrl(pathAndQuery), {
+      ...options,
+      signal: controller?.signal
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Cloud request timed out.");
+    }
+    throw error;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function cloudSelectPortalState(columns = "updated_at,data") {
   if (supabaseClient) {
     try {
@@ -60,8 +78,8 @@ async function cloudSelectPortalState(columns = "updated_at,data") {
     }
   }
 
-  const response = await fetch(
-    buildCloudRestUrl(`${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`),
+  const response = await cloudFetch(
+    `${CLOUD_STATE_TABLE}?id=eq.${CLOUD_STATE_ROW_ID}&select=${encodeURIComponent(columns)}`,
     {
       method: "GET",
       cache: "no-store"
@@ -91,8 +109,8 @@ async function cloudUpsertPortalState(row, selectColumns = "") {
     }
   }
 
-  const response = await fetch(
-    buildCloudRestUrl(`${CLOUD_STATE_TABLE}?on_conflict=id`),
+  const response = await cloudFetch(
+    `${CLOUD_STATE_TABLE}?on_conflict=id`,
     {
       method: "POST",
       headers: {
@@ -405,13 +423,20 @@ async function bootstrapCloudState() {
 
   cloudBusy = true;
   try {
-    await ensureCloudRow();
     const data = await cloudSelectPortalState("updated_at,data");
 
     if (!data) {
-      warnCloudOnce(CLOUD_SETUP_HINT);
-      cloudConnected = false;
-      return false;
+      await ensureCloudRow();
+      const seededData = await cloudSelectPortalState("updated_at,data");
+      if (!seededData) {
+        warnCloudOnce(CLOUD_SETUP_HINT);
+        cloudConnected = false;
+        return false;
+      }
+      cloudUpdatedAt = seededData.updated_at || "";
+      hydrateLocalStorageFromCloud(mergePortalState(seededData.data || {}, getLocalPortalStateSnapshot()));
+      cloudConnected = true;
+      return true;
     }
 
     const localPayload = getLocalPortalStateSnapshot();
