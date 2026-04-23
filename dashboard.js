@@ -164,19 +164,18 @@ async function startDashboard() {
   applyPageKindLayout(); 
   forceCloudStatusResolution();
   
-  initDashboard(); // Initialize UI with local data immediately
+  // Initialize UI with local data immediately
+  initDashboard(); 
 
-  bootstrapCloudState()
-    .then(() => {
-      // Refresh after cloud sync
-      renderAllData();
-    })
-    .catch(() => {
-      // Keep running in local mode if cloud bootstrap fails
-    })
-    .finally(() => {
-      renderCloudSyncStatus();
-    });
+  // Attempt cloud sync and refresh UI regardless of outcome
+  try {
+    await bootstrapCloudState();
+  } catch (err) {
+    console.warn("Cloud bootstrap failed, continuing in local mode.", err);
+  } finally {
+    renderAllData();
+    renderCloudSyncStatus();
+  }
 
   startCloudPolling(() => {
     renderAllData();
@@ -220,6 +219,7 @@ function renderAllData() {
   if (!refreshedUser) return;
 
   state.currentUser = refreshedUser;
+  applyPageKindLayout(); // Ensure visibility is correct during every data refresh
   bindHeader();
   renderCalendar();
   renderCalendarView();
@@ -259,15 +259,9 @@ function initDashboard() {
   fillTicketDefaults();
   fillAccomplishmentDefaults();
   fillAnnouncementDefaults();
-  initMessenger();
   populateAdminDepartmentFilter();
-  renderCalendar();
   populateSignatories();
-  renderTickets();
-  renderAccomplishments();
-  renderAdminLogs();
-  renderAnnouncements();
-  applyPageKindLayout();
+  renderAllData(); // Centralized call to load everything
 }
 
 function bindEvents() {
@@ -1222,14 +1216,11 @@ function renderCalendar() {
   if (!el.calendarGrid || !el.calendarMonth) return;
   renderCalendarGrid(el.calendarGrid, el.calendarMonth, false);
 
+  const todayKey = localDateKey(new Date());
+  const events = getEvents();
+  // Always try to load today's schedule into the table if the container exists
   if (el.dailyScheduleTableBody && el.dailyScheduleContainer) {
-    const monthKey = `${state.calendarDate.getFullYear()}-${String(state.calendarDate.getMonth() + 1).padStart(2, "0")}-`;
-    const events = getEvents()
-      .filter((event) => String(event.date || "").startsWith(monthKey))
-      .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
-    const todayKey = localDateKey(new Date());
-    const defaultDate = events.find((event) => event.date === todayKey)?.date || events[0]?.date || todayKey;
-    renderDailyScheduleTable(defaultDate);
+     renderDailyScheduleTable(todayKey);
   }
 }
 
@@ -1878,30 +1869,38 @@ function renderAnnouncements() {
   });
 }
 
+const SYSTEM_ANNOUNCEMENT_PATTERNS = [
+  /^TICKET\s+(SUBMITTED|UPDATED|DELETED)/i,
+  /^SCHEDULE\s+(ADDED|UPDATED|DELETED)/i,
+  /^ACCOMPLISHMENT REPORT SUBMITTED/i,
+  /^ATTENDANCE\s+\|/i,
+  /^TIME-IN:/i,
+  /^TIME-OUT:/i
+];
+
 function buildPublicFeedItems() {
-  const systemAnnouncementPatterns = [
-    /^TICKET\s+(SUBMITTED|UPDATED|DELETED)/i,
-    /^SCHEDULE\s+(ADDED|UPDATED|DELETED)/i,
-    /^ACCOMPLISHMENT REPORT SUBMITTED/i,
-    /^ATTENDANCE\s+\|/i,
-    /^TIME-IN:/i,
-    /^TIME-OUT:/i
-  ];
+  const LIMIT = 50;
+  const allUsers = getUsers();
+  const userMap = new Map(allUsers.map(u => [u.id, u]));
 
   const announcements = getAnnouncements()
     .filter((item) => {
       const sourceType = String(item.sourceType || "announcement").toLowerCase();
       if (sourceType === "system") return false;
       const message = String(item.message || "");
-      return !systemAnnouncementPatterns.some((pattern) => pattern.test(message));
+      return !SYSTEM_ANNOUNCEMENT_PATTERNS.some((pattern) => pattern.test(message));
     })
+    .slice(-LIMIT)
     .map((item) => ({
     ...item,
     sourceType: item.sourceType || "announcement",
     sourceId: item.sourceId || item.id
   }));
 
-  const ticketPosts = getTickets().map((ticket) => ({
+  const ticketPosts = getTickets()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, LIMIT)
+    .map((ticket) => ({
     id: `ticket-${ticket.id}`,
     userId: ticket.employeeId,
     name: ticket.employeeName,
@@ -1915,11 +1914,14 @@ function buildPublicFeedItems() {
     sourceId: ticket.id
   }));
 
-  const schedulePosts = getEvents().map((event) => ({
+  const schedulePosts = getEvents()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, LIMIT)
+    .map((event) => ({
     id: `event-${event.id}`,
     userId: event.ownerId,
     name: event.ownerName,
-    department: getUserDepartment(event.ownerId),
+    department: userMap.get(event.ownerId)?.department || "",
     date: event.date || localDateKey(new Date()),
     message: `Schedule | ${event.title} | ${event.date} | ${normalizeScheduleStatus(event.status)} | ${event.cityAssigned || "-"}`,
     attachment: "",
@@ -1929,11 +1931,14 @@ function buildPublicFeedItems() {
     sourceId: event.id
   }));
 
-  const accomplishmentPosts = getAccomplishments().map((report) => ({
+  const accomplishmentPosts = getAccomplishments()
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, LIMIT)
+    .map((report) => ({
     id: `accomp-${report.id}`,
     userId: report.userId,
     name: report.employeeName,
-    department: getUserDepartment(report.userId),
+    department: userMap.get(report.userId)?.department || "",
     date: report.date || localDateKey(new Date()),
     message: `Accomplishment | ${report.activity}`,
     attachment: report.attachment || "",
@@ -1943,7 +1948,10 @@ function buildPublicFeedItems() {
     sourceId: report.id
   }));
 
-  const attendancePosts = getAttendance().map((entry) => ({
+  const attendancePosts = getAttendance()
+    .sort((a, b) => b.timeIn.localeCompare(a.timeIn))
+    .slice(0, LIMIT)
+    .map((entry) => ({
     id: `attendance-${entry.id}`,
     userId: entry.userId,
     name: entry.fullname,
