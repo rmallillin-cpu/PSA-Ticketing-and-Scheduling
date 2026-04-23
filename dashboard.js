@@ -415,13 +415,15 @@ function bindEvents() {
 }
 
 function bindHeader() {
-  el.announceAvatar.src = state.currentUser.profilePicture || DEFAULT_AVATAR;
-  el.feedComposerAvatar.src = state.currentUser.profilePicture || DEFAULT_AVATAR;
-  el.welcomeText.textContent = `Welcome, ${formatDisplayName(state.currentUser.fullname)}`;
-  el.userMeta.textContent = `${state.currentUser.employeeCode || "-"} | ${state.currentUser.department} | ${state.currentUser.position} | ${state.currentUser.role}`;
-  el.timeInStatus.textContent = buildTimeInStatusText(state.currentUser.id);
+  if (el.announceAvatar) el.announceAvatar.src = state.currentUser.profilePicture || DEFAULT_AVATAR;
+  if (el.feedComposerAvatar) el.feedComposerAvatar.src = state.currentUser.profilePicture || DEFAULT_AVATAR;
+  if (el.welcomeText) el.welcomeText.textContent = `Welcome, ${formatDisplayName(state.currentUser.fullname)}`;
+  if (el.userMeta) el.userMeta.textContent = `${state.currentUser.employeeCode || "-"} | ${state.currentUser.department} | ${state.currentUser.position} | ${state.currentUser.role}`;
+  if (el.timeInStatus) el.timeInStatus.textContent = buildTimeInStatusText(state.currentUser.id);
   renderCloudSyncStatus();
-  el.openAdminLogsPanelBtn.classList.toggle("hidden", state.currentUser.role !== "admin");
+  if (el.openAdminLogsPanelBtn) {
+    el.openAdminLogsPanelBtn.classList.toggle("hidden", state.currentUser.role !== "admin");
+  }
 }
 
 function renderCloudSyncStatus() {
@@ -436,6 +438,14 @@ function renderCloudSyncStatus() {
     el.cloudSyncStatus.classList.remove("online");
     el.cloudSyncStatus.classList.add("offline");
   }
+
+  setTimeout(() => {
+    if (!el.cloudSyncStatus) return;
+    if (/checking/i.test(el.cloudSyncStatus.textContent || "")) {
+      const fallback = getCloudSyncState();
+      el.cloudSyncStatus.textContent = fallback.connected ? "Cloud sync: connected" : "Cloud sync: offline (local-only)";
+    }
+  }, 2500);
 }
 
 function fillTicketDefaults() {
