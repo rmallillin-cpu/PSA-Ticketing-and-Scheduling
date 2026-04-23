@@ -113,9 +113,6 @@ const el = {
   printScheduleLogBtn: document.getElementById("printScheduleLogBtn"),
   printTicketLogBtn: document.getElementById("printTicketLogBtn"),
   printAccompLogBtn: document.getElementById("printAccompLogBtn"),
-  dailyScheduleContainer: document.getElementById("dailyScheduleContainer"),
-  selectedScheduleDate: document.getElementById("selectedScheduleDate"),
-  dailyScheduleTableBody: document.getElementById("dailyScheduleTableBody"),
   adminScheduleTableBody: document.getElementById("adminScheduleTableBody"),
   adminTicketsTableBody: document.getElementById("adminTicketsTableBody"),
   adminAccomplishmentTableBody: document.getElementById("adminAccomplishmentTableBody"),
@@ -124,7 +121,10 @@ const el = {
   eventModalTitle: document.getElementById("eventModalTitle"),
   eventId: document.getElementById("eventId"),
   eventDate: document.getElementById("eventDate"),
-  eventDateLabel: document.getElementById("eventDateLabel"),
+  eventDateLabel: document.getElementById("eventDateLabel"), // This is in eventModal, which is now in dashboard.html
+  dailyScheduleContainer: document.getElementById("dailyScheduleContainer"), // This is in calendar.html
+  selectedScheduleDate: document.getElementById("selectedScheduleDate"), // This is in calendar.html
+  dailyScheduleTableBody: document.getElementById("dailyScheduleTableBody"), // This is in calendar.html
   eventTitle: document.getElementById("eventTitle"),
   eventDescription: document.getElementById("eventDescription"),
   eventCity: document.getElementById("eventCity"),
@@ -226,11 +226,6 @@ function bindEvents() {
   bindPanelLauncher(el.openCalendarPanelBtn, el.calendarPanelModal, "calendar");
   bindPanelLauncher(el.openTicketPanelBtn, el.ticketPanelModal, "ticket");
   bindPanelLauncher(el.openAccompPanelBtn, el.accompPanelModal, "accomplishment");
-  bindPanelLauncher(el.openAdminLogsPanelBtn, el.adminLogsPanelModal, "admin-logs");
-  el.closeCalendarPanelBtn.addEventListener("click", () => el.calendarPanelModal.close());
-  el.closeTicketPanelBtn.addEventListener("click", () => el.ticketPanelModal.close());
-  el.closeAccompPanelBtn.addEventListener("click", () => el.accompPanelModal.close());
-  el.closeAdminLogsPanelBtn.addEventListener("click", () => el.adminLogsPanelModal.close());
   
   if (el.openTicketEntryBtn) el.openTicketEntryBtn.addEventListener("click", () => el.ticketEntryModal.showModal());
   if (el.openAccompEntryBtn) el.openAccompEntryBtn.addEventListener("click", () => el.accompEntryModal.showModal());
@@ -520,9 +515,9 @@ function applyPageKindLayout() {
   }
 
   if (pageKind === "calendar") mountStandalonePanel(el.calendarPanelModal, el.closeCalendarPanelBtn);
-  if (pageKind === "ticket") mountStandalonePanel(el.ticketPanelModal, el.closeTicketPanelBtn);
-  if (pageKind === "accomplishment") mountStandalonePanel(el.accompPanelModal, el.closeAccompPanelBtn);
-  if (pageKind === "admin-logs") mountStandalonePanel(el.adminLogsPanelModal, el.closeAdminLogsPanelBtn);
+  if (pageKind === "ticket") mountStandalonePanel(el.ticketPanelModal); // Removed closeBtn as it's handled by mountStandalonePanel
+  if (pageKind === "accomplishment") mountStandalonePanel(el.accompPanelModal); // Removed closeBtn
+  if (pageKind === "admin-logs") mountStandalonePanel(el.adminLogsPanelModal); // Removed closeBtn
 }
 
 function mountStandalonePanel(modal, closeBtn) {
@@ -556,9 +551,9 @@ function mountStandalonePanel(modal, closeBtn) {
   body.classList.remove("hidden");
   body.style.display = "block";
 
-  modal.classList.add("hidden");
-  modal.removeAttribute("open");
-  if (closeBtn) closeBtn.classList.add("hidden");
+  // The modal itself is hidden by CSS when its content is moved.
+  // No need to explicitly close it here.
+  // if (closeBtn) closeBtn.classList.add("hidden"); // This is now redundant
 }
 
 function applyAdminTabVisibility() {
@@ -1106,7 +1101,7 @@ function renderCalendarGrid(targetGrid, targetMonthLabel, isExpandedView) {
 function renderDailyScheduleTable(dateKey) {
   if (!el.dailyScheduleTableBody) return;
 
-  // Show date immediately for feedback
+  // Show date immediately for user feedback
   el.selectedScheduleDate.textContent = dateKey;
 
   const events = getEvents().filter(e => e.date === dateKey);
