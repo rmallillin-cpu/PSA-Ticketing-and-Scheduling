@@ -229,6 +229,9 @@ function renderAllData() {
   renderAdminLogs();
   renderAnnouncements();
   initMessenger();
+  if (state.activeTicketId && el.ticketModal?.open) {
+    renderTicketModal(state.activeTicketId);
+  }
 
   const unreadNow = getUnreadMessageCount(getChats(), state.currentUser?.id, state.currentUser?.username);
   const announcementNow = getLatestAnnouncementAt(buildPublicFeedItems());
@@ -1811,6 +1814,14 @@ function renderTicketModal(ticketId) {
   renderNotes(ticket);
 }
 
+function normalizeTicketNotes(notes) {
+  if (!Array.isArray(notes)) return [];
+  return notes
+    .filter((note) => note && typeof note === "object")
+    .slice()
+    .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+}
+
 function updateTicketInfo() {
   const ticketId = el.updateTicketId.value;
   const tickets = getTickets();
@@ -1839,14 +1850,16 @@ function updateTicketInfo() {
 }
 
 function renderNotes(ticket) {
+  if (!el.notesThread) return;
+  const notes = normalizeTicketNotes(ticket?.notes);
   el.notesThread.innerHTML = "";
 
-  if (!ticket.notes.length) {
+  if (!notes.length) {
     el.notesThread.innerHTML = "<p>No notes yet.</p>";
     return;
   }
 
-  ticket.notes.forEach((note) => {
+  notes.forEach((note) => {
     const item = document.createElement("article");
     item.className = "note-item";
     item.innerHTML = `
@@ -1866,6 +1879,7 @@ async function addNote() {
 
   const revisedFile = el.noteAttachment.files[0] ? await fileToDataUrl(el.noteAttachment.files[0]) : "";
 
+  tickets[idx].notes = normalizeTicketNotes(tickets[idx].notes);
   tickets[idx].notes.push({
     id: crypto.randomUUID(),
     author: state.currentUser.fullname,
@@ -2244,6 +2258,16 @@ function initializeNotificationState() {
 
 function handleStorageUpdate(event) {
   if (!event.key) return;
+
+  if (event.key === STORAGE_KEYS.tickets) {
+    renderTickets();
+    renderAdminLogs();
+    renderAnnouncements();
+    if (state.activeTicketId && el.ticketModal?.open) {
+      renderTicketModal(state.activeTicketId);
+    }
+    return;
+  }
 
   if (event.key === STORAGE_KEYS.announcements) {
     const latestAt = getLatestAnnouncementAt(getAnnouncements());

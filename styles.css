@@ -295,9 +295,9 @@ textarea:focus {
   padding: 12px 24px;
   margin-bottom: 0;
   display: grid;
-  grid-template-columns: auto auto 1fr; /* Brand | Search | Empty space */
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  column-gap: 30px;
+  column-gap: 18px;
   background: var(--psa-blue); /* Header is now Blue */
   color: #ffffff; /* White text for contrast */
   border-bottom: 3px solid rgba(0, 0, 0, 0.1);
@@ -323,7 +323,7 @@ textarea:focus {
 }
 
 .header-search input {
-  width: 400px;
+  width: min(100%, 430px);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -348,7 +348,14 @@ textarea:focus {
 }
 
 .topbar-center {
-  grid-column: auto;
+  width: 100%;
+  justify-self: start;
+}
+
+.header-search {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .topbar-brand-text h3 {
