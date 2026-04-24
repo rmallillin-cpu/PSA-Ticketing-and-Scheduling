@@ -1058,6 +1058,12 @@ function setConversationMessages(otherUserId, messages) {
   setChats(chats);
 }
 
+function isOwnChatMessage(message) {
+  if (!message || !state.currentUser) return false;
+  return normalizeToken(message.senderId) === normalizeToken(state.currentUser.id)
+    || normalizeToken(message.senderUsername) === normalizeToken(state.currentUser.username);
+}
+
 async function sendChatMessage() {
   const receiverId = state.activeChatUserId;
   const text = el.chatMessageInput.value.trim();
@@ -1151,8 +1157,7 @@ function renderChatThread() {
 
   let lastDayLabel = "";
   messages.forEach((message) => {
-    const mine = message.senderId === state.currentUser.id
-      || normalizeToken(message.senderUsername) === normalizeToken(state.currentUser.username);
+    const mine = isOwnChatMessage(message);
     const senderUser = mine ? state.currentUser : (findUserByToken(message.senderId || message.senderUsername) || otherUser);
     const dayLabel = formatChatDayLabel(message.createdAt);
     if (dayLabel && dayLabel !== lastDayLabel) {
@@ -1269,8 +1274,11 @@ function editChatMessage(messageId) {
   if (!otherUserId) return;
 
   const messages = getConversationMessages(otherUserId);
-  const idx = messages.findIndex((message) => message.id === messageId && message.senderId === state.currentUser.id);
-  if (idx < 0) return;
+  const idx = messages.findIndex((message) => message.id === messageId && isOwnChatMessage(message));
+  if (idx < 0) {
+    notify("You can only edit your own message.", "error");
+    return;
+  }
 
   const currentText = messages[idx].text || "";
   const nextText = window.prompt("Edit your message:", currentText);
@@ -1279,6 +1287,7 @@ function editChatMessage(messageId) {
   messages[idx].text = nextText.trim();
   messages[idx].updatedAt = new Date().toISOString();
   setConversationMessages(otherUserId, messages);
+  void pushCloudState();
   renderChatThread();
 }
 
@@ -1287,11 +1296,15 @@ function deleteChatMessage(messageId) {
   if (!otherUserId) return;
 
   const messages = getConversationMessages(otherUserId);
-  const target = messages.find((message) => message.id === messageId && message.senderId === state.currentUser.id);
-  if (!target) return;
+  const target = messages.find((message) => message.id === messageId && isOwnChatMessage(message));
+  if (!target) {
+    notify("You can only delete your own message.", "error");
+    return;
+  }
 
   const updated = messages.filter((message) => message.id !== messageId);
   setConversationMessages(otherUserId, updated);
+  void pushCloudState();
   renderChatThread();
   renderUnreadAlert();
 }
