@@ -188,19 +188,36 @@ async function handleSendEmail(req: SendEmailRequest): Promise<Response> {
 }
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  // Only allow POST
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: corsHeaders,
+    return new Response("ok", { 
+      status: 200, 
+      headers: corsHeaders 
     });
   }
 
-  const body = await req.json();
-  return await handleSendEmail(body);
+  try {
+    // Only allow POST
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ success: false, error: "Method not allowed" }), 
+        {
+          status: 405,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    const body = await req.json();
+    return await handleSendEmail(body);
+  } catch (error) {
+    console.error("Critical error in serve:", error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
 });
