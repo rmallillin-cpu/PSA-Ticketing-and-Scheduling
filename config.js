@@ -38,8 +38,8 @@
   if (!CONFIG.supabase.url) {
     console.warn("WARNING: Supabase URL not configured");
   }
-  if (!CONFIG.supabase.anonKey) {
-    console.warn("WARNING: Supabase Anon Key not configured");
+  if (!CONFIG.supabase.anonKey || CONFIG.supabase.anonKey.startsWith('sb_publishable_')) {
+    console.warn("WARNING: Supabase Anon Key looks like a placeholder or is invalid. It should usually start with 'eyJ'.");
   }
 
   win.CONFIG = CONFIG;

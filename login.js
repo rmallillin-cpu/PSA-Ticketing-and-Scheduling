@@ -132,6 +132,13 @@ async function doSignup() {
     return;
   }
 
+  const password = loginEls.signupPassword.value;
+
+  if (password.length < 6) {
+    notify("Password must be at least 6 characters for cloud features.", "error");
+    return;
+  }
+
   const picture = await fileToDataUrl(loginEls.signupProfilePic.files[0]);
 
   users.push({
@@ -142,7 +149,7 @@ async function doSignup() {
     email,
     department: loginEls.signupDepartment.value.trim(),
     position: loginEls.signupPosition.value.trim(),
-    password: loginEls.signupPassword.value,
+    password,
     role: loginEls.signupIsAdmin.checked ? "admin" : "user",
     profilePicture: picture || DEFAULT_AVATAR,
     createdAt: new Date().toISOString()

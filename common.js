@@ -11,6 +11,9 @@ const STORAGE_KEYS = {
 };
 const SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
+if (SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_')) {
+  console.warn("WARNING: SUPABASE_PUBLISHABLE_KEY in common.js looks like a placeholder. It should usually be a long JWT starting with 'eyJ'.");
+}
 const CLOUD_STATE_TABLE = "portal_state";
 const CLOUD_STATE_ROW_ID = 1;
 const SUPABASE_API_KEY_QUERY = `apikey=${encodeURIComponent(SUPABASE_PUBLISHABLE_KEY)}`;

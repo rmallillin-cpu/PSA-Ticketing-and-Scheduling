@@ -25,6 +25,12 @@ class EmailDashboard {
         try {
             await initSupabase();
 
+            // Check for placeholder keys
+            const client = getSupabaseClient();
+            if (CONFIG.supabase.anonKey.startsWith('sb_publishable_')) {
+                this.showToast('Configuration Warning: Using placeholder Supabase keys. Authentication may fail until real keys are provided in config.js.', 'warning');
+            }
+
             // Check authentication
             this.portalUser = this.getPortalUserFromStorage();
             const isAuth = await isAuthenticated().catch(() => false);
@@ -45,7 +51,10 @@ class EmailDashboard {
 
             if (!this.supabaseUser) {
                 this.setupEventListeners();
-                this.showToast('Supabase authentication failed. Email data tabs are unavailable for this account.', 'error');
+                // If no specific toast was shown by ensureSupabaseAuthFromPortalUser, show a generic one
+                if (document.querySelectorAll('.toast').length === 0) {
+                    this.showToast('Supabase authentication failed. Please check your credentials or contact support.', 'error');
+                }
                 return;
             }
 
@@ -859,34 +868,117 @@ class EmailDashboard {
             const client = getSupabaseClient();
             const email = String(user?.email || '').trim().toLowerCase();
             const password = String(user?.password || '');
-            if (!email || !password) return null;
+            
+            console.log('🔑 Attempting Supabase sync for:', email);
+
+            if (!email || !password) {
+                console.warn('⚠️ Missing email or password for Supabase sync');
+                return null;
+            }
+
+            // Supabase requires passwords to be at least 6 characters
+            if (password.length < 6) {
+                console.warn('⚠️ Password too short for Supabase auth (min 6 chars)');
+                this.showToast('Your portal password is too short for Supabase synchronization. Please update your password to at least 6 characters.', 'warning');
+                return null;
+            }
+
+            // Basic email validation to avoid 400 from Supabase
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                console.warn('⚠️ Invalid email format for Supabase auth:', email);
+                this.showToast(`Cannot sync with Supabase: "${email}" is not a valid email format.`, 'warning');
+                return null;
+            }
 
             const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
                 email,
                 password
             });
 
+            if (signInError) {
+                console.warn('❌ Supabase sign-in failed:', signInError.message, signInError);
+                
+                // If it's a 400 error and specifically "Invalid login credentials", we might want to try sign-up
+                // but ONLY if it's not a rate limit error or other fatal error.
+                const isInvalidCredentials = signInError.message.toLowerCase().includes('invalid login credentials');
+                
+                if (signInError.message.toLowerCase().includes('confirm')) {
+                    this.showToast('Please confirm your email address in your inbox before using email features.', 'warning');
+                    return null;
+                }
+                
+                if (signInError.status === 429) {
+                    console.error('🚫 Rate limit exceeded (429). Waiting before next attempt.');
+                    this.showToast('Too many authentication attempts. Please wait a moment before trying again.', 'error');
+                    return null;
+                }
+
+                if (signInError.status === 400 && !isInvalidCredentials) {
+                    console.error('🚫 Supabase returned 400 Bad Request. Check if email/password are correct and if the Supabase project is active.');
+                    return null;
+                }
+
+                // If it's NOT invalid credentials (e.g., some other 400), don't bother signing up
+                if (!isInvalidCredentials && signInError.status !== 400) {
+                    return null;
+                }
+            }
+
             if (!signInError && signInData?.user) {
+                console.log('✅ Supabase sign-in successful');
                 return signInData.user;
             }
+
+            // Only attempt sign-up if we're reasonably sure the user doesn't exist (i.e., invalid credentials on first try)
+            console.log('🚀 User not found or sign-in failed. Attempting to sign up user to Supabase...');
+            
+            // Add a small delay to avoid hitting rate limits too fast if this is called in a loop
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             const { error: signUpError } = await client.auth.signUp({
                 email,
                 password
             });
 
-            if (signUpError && !String(signUpError.message || '').toLowerCase().includes('already')) {
-                return null;
+            if (signUpError) {
+                console.warn('❌ Supabase sign-up failed:', signUpError.message, signUpError);
+                
+                if (signUpError.status === 429) {
+                    this.showToast('Rate limit exceeded for sign-up. Please try again later.', 'error');
+                    return null;
+                }
+
+                if (signUpError.message.toLowerCase().includes('confirm')) {
+                    this.showToast('Sign-up successful! Please check your email to confirm your account.', 'info');
+                    return null;
+                }
+                if (!String(signUpError.message || '').toLowerCase().includes('already')) {
+                    return null;
+                }
+                console.log('ℹ️ User already exists in Supabase Auth');
             }
+
+            // If signup worked or user already existed, try sign-in one last time
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             const { data: retrySignInData, error: retrySignInError } = await client.auth.signInWithPassword({
                 email,
                 password
             });
 
-            if (retrySignInError) return null;
+            if (retrySignInError) {
+                console.error('❌ Supabase retry sign-in failed:', retrySignInError.message, retrySignInError);
+                if (retrySignInError.message.toLowerCase().includes('confirm')) {
+                    this.showToast('Account created. Please confirm your email before logging in.', 'warning');
+                }
+                return null;
+            }
+            
+            console.log('✅ Supabase sync successful after sign-up');
             return retrySignInData?.user || null;
-        } catch {
+        } catch (err) {
+            console.error('💥 Unexpected error during Supabase sync:', err);
             return null;
         }
     }
