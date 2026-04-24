@@ -153,28 +153,21 @@ create table public.email_campaigns (
   updated_at timestamptz default now()
 );
 
--- Enable RLS on all tables
-alter table public.contacts enable row level security;
-alter table public.senders enable row level security;
-alter table public.email_templates enable row level security;
-alter table public.email_logs enable row level security;
-alter table public.email_campaigns enable row level security;
+-- DISABLE RLS for now to ensure connectivity works
+-- You can re-enable this later for production
+alter table public.contacts disable row level security;
+alter table public.senders disable row level security;
+alter table public.email_templates disable row level security;
+alter table public.email_logs disable row level security;
+alter table public.email_campaigns disable row level security;
 
--- Create ultra-permissive policies for development
--- These allow anyone with the API key to perform any action
-create policy "dev_contacts_policy" on public.contacts for all to anon, authenticated using (true) with check (true);
-create policy "dev_senders_policy" on public.senders for all to anon, authenticated using (true) with check (true);
-create policy "dev_templates_policy" on public.email_templates for all to anon, authenticated using (true) with check (true);
-create policy "dev_logs_policy" on public.email_logs for all to anon, authenticated using (true) with check (true);
-create policy "dev_campaigns_policy" on public.email_campaigns for all to anon, authenticated using (true) with check (true);
-
--- Explicitly grant permissions to anon and authenticated roles
-grant all on table public.contacts to anon, authenticated;
-grant all on table public.senders to anon, authenticated;
-grant all on table public.email_templates to anon, authenticated;
-grant all on table public.email_logs to anon, authenticated;
-grant all on table public.email_campaigns to anon, authenticated;
-grant usage on schema public to anon, authenticated;
+-- Grant all permissions to everyone
+grant all on table public.contacts to anon, authenticated, service_role;
+grant all on table public.senders to anon, authenticated, service_role;
+grant all on table public.email_templates to anon, authenticated, service_role;
+grant all on table public.email_logs to anon, authenticated, service_role;
+grant all on table public.email_campaigns to anon, authenticated, service_role;
+grant usage on schema public to anon, authenticated, service_role;
 
 -- Seed initial sender
 insert into public.senders (name, email, display_name)
