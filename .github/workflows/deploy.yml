@@ -1,5 +1,5 @@
 name: Deploy Email System to Supabase
-
+# Force trigger deployment
 on:
   push:
     branches:

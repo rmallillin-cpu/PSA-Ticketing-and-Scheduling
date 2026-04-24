@@ -17,6 +17,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Log initialization
+console.log("Send-email function initialized");
+
 const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY");
 const sendgridApiUrl = "https://api.sendgrid.com/v3/mail/send";
 
