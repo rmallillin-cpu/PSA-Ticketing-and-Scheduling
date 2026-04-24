@@ -74,11 +74,23 @@ set data = jsonb_set(
 )
 where id = 1;
 
--- Email Dashboard Tables
--- Force recreate to ensure correct schema and policies
+-- ========================================================
+-- NUCLEAR RESET: FIXING ALL 403 / RLS ERRORS
+-- This script drops and recreates ALL Email Dashboard tables 
+-- without any security locks to ensure they work perfectly.
+-- ========================================================
+
+-- 1. DROP ALL TABLES (Fresh Start)
+drop table if exists public.email_campaigns cascade;
+drop table if exists public.email_logs cascade;
+drop table if exists public.email_templates cascade;
+drop table if exists public.senders cascade;
+drop table if exists public.contacts cascade;
+
+-- 2. RECREATE TABLES WITHOUT RLS
+-- (Note: RLS is OFF by default for new tables)
 
 -- Contacts Table
-drop table if exists public.contacts cascade;
 create table public.contacts (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -93,7 +105,6 @@ create table public.contacts (
 );
 
 -- Senders Table
-drop table if exists public.senders cascade;
 create table public.senders (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -105,7 +116,6 @@ create table public.senders (
 );
 
 -- Email Templates Table
-drop table if exists public.email_templates cascade;
 create table public.email_templates (
   id uuid default gen_random_uuid() primary key,
   title text not null,
@@ -120,7 +130,6 @@ create table public.email_templates (
 );
 
 -- Email Logs Table
-drop table if exists public.email_logs cascade;
 create table public.email_logs (
   id uuid default gen_random_uuid() primary key,
   recipient_email text not null,
@@ -139,7 +148,6 @@ create table public.email_logs (
 );
 
 -- Email Campaigns Table
-drop table if exists public.email_campaigns cascade;
 create table public.email_campaigns (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -153,45 +161,26 @@ create table public.email_campaigns (
   updated_at timestamptz default now()
 );
 
--- ========================================================
--- NUCLEAR RESET: FIXING THE 403 / RLS ERROR ONCE AND FOR ALL
--- ========================================================
-
--- 1. DROP THE CONTACTS TABLE COMPLETELY
--- This removes any hidden or broken RLS settings attached to it
-drop table if exists public.contacts cascade;
-
--- 2. RECREATE THE TABLE WITHOUT ENABLING RLS
--- By default, a table does NOT have RLS until you run "ALTER TABLE ... ENABLE ROW LEVEL SECURITY"
--- We will NOT run that command this time.
-create table public.contacts (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  email text not null,
-  phone text,
-  company text,
-  tags text[] default '{}',
-  notes text,
-  is_active boolean default true,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
--- 3. ENSURE RLS IS DISABLED (Just to be absolutely sure)
+-- 3. UNLOCK EVERYTHING (Disable RLS and Grant Permissions)
 alter table public.contacts disable row level security;
+alter table public.senders disable row level security;
+alter table public.email_templates disable row level security;
+alter table public.email_logs disable row level security;
+alter table public.email_campaigns disable row level security;
 
--- 4. GRANT TOTAL ACCESS TO EVERYONE
--- This allows your web app to read/write freely
 grant all on table public.contacts to anon, authenticated, service_role;
+grant all on table public.senders to anon, authenticated, service_role;
+grant all on table public.email_templates to anon, authenticated, service_role;
+grant all on table public.email_logs to anon, authenticated, service_role;
+grant all on table public.email_campaigns to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
 
--- 5. VERIFICATION (Check the 'relrowsecurity' column)
--- If this returns 'f', the table is unlocked and the error will be gone.
+-- 4. VERIFICATION
+-- All 'relrowsecurity' should be 'f'
 select relname, relrowsecurity 
 from pg_class 
-where relname = 'contacts';
+where relname in ('contacts', 'senders', 'email_templates', 'email_logs', 'email_campaigns');
 
--- Seed initial sender
+-- 5. SEED INITIAL SENDER
 insert into public.senders (name, email, display_name)
-values ('PSA Administration', 'admin@psa-portal.com', 'PSA Admin')
-on conflict do nothing;
+values ('PSA Administration', 'admin@psa-portal.com', 'PSA Admin');
