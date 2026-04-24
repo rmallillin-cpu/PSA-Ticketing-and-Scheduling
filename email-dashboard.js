@@ -401,6 +401,12 @@ class EmailDashboard {
             select.appendChild(option);
         });
 
+        // Auto-select if only one sender
+        if (this.senders.length === 1) {
+            select.value = this.senders[0].id;
+            this.currentSender = this.senders[0];
+        }
+
         select.addEventListener('change', (e) => {
             const senderId = e.target.value;
             this.currentSender = this.senders.find(s => s.id === senderId) || null;

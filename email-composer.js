@@ -113,7 +113,8 @@ class EmailComposer {
      * @returns {boolean} True if valid email
      */
     static isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Robust email regex that supports common providers and TLDs
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         return emailRegex.test(email);
     }
 
