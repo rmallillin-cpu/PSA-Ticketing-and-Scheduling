@@ -1057,11 +1057,45 @@ class EmailDashboard {
                     return;
                 }
 
+                const DEFAULT_AVATAR = 'logo/PSA.png';
+                const escapeHtml = (str) => {
+                    if (!str) return '';
+                    return String(str)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                };
+                const formatDisplayName = (name) => {
+                    if (!name) return 'Employee';
+                    return String(name).split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+                };
+
                 filtered.forEach((u) => {
-                    const chip = document.createElement('div');
-                    chip.className = 'employee-name-btn';
-                    chip.textContent = (u.fullname || u.username || 'Employee').toUpperCase();
-                    employeeListEl.appendChild(chip);
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'employee-name-btn';
+                    
+                    // Simple online check - can be improved later
+                    const isOnline = false; 
+
+                    button.innerHTML = `
+                        <div class="employee-name-main">
+                            <span class="employee-avatar-chip">
+                                <img src="${u.profilePicture || DEFAULT_AVATAR}" alt="${escapeHtml(formatDisplayName(u.fullname || u.username))}" />
+                            </span>
+                            <div class="employee-name-copy">
+                                <div class="employee-name-title">
+                                    <i class="status-dot ${isOnline ? 'online' : ''}"></i>
+                                    <span>${escapeHtml(formatDisplayName(u.fullname || u.username))}</span>
+                                </div>
+                                <div class="employee-name-meta">${escapeHtml(u.department || "-")} | ${escapeHtml(u.position || "-")}</div>
+                            </div>
+                        </div>
+                        <i class="name-unread hidden">0</i>
+                    `;
+                    employeeListEl.appendChild(button);
                 });
             };
 
