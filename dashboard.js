@@ -761,7 +761,7 @@ function renderEmployeeNameList(users) {
     const isOnline = checkUserOnline(user.id);
     button.innerHTML = `
       <div class="employee-name-main">
-        <span class="employee-avatar-chip">${escapeHtml(buildInitials(user.fullname || user.username || "U"))}</span>
+        <span class="employee-avatar-chip"><img src="${user.profilePicture || DEFAULT_AVATAR}" alt="${escapeHtml(formatDisplayName(user.fullname || user.username || "Employee"))}" /></span>
         <div class="employee-name-copy">
           <div class="employee-name-title"><i class="status-dot ${isOnline ? 'online' : ''}"></i><span>${escapeHtml(formatDisplayName(user.fullname))}</span></div>
           <div class="employee-name-meta">${escapeHtml(user.department || "-")} | ${escapeHtml(user.position || "-")}</div>
