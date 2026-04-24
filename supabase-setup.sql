@@ -162,6 +162,85 @@ create table public.email_campaigns (
 );
 
 -- 3. UNLOCK EVERYTHING (Disable RLS and Grant Permissions)
+drop table if exists public.email_campaigns cascade;
+drop table if exists public.email_logs cascade;
+drop table if exists public.email_templates cascade;
+drop table if exists public.senders cascade;
+drop table if exists public.contacts cascade;
+
+create table public.contacts (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  phone text,
+  company text,
+  tags text[] default '{}',
+  notes text,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.senders (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  display_name text,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.email_templates (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  subject text not null,
+  body text not null,
+  description text,
+  variables text[] default '{}',
+  is_active boolean default true,
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.email_logs (
+  id uuid default gen_random_uuid() primary key,
+  recipient_email text not null,
+  recipient_name text,
+  subject text not null,
+  message_body text,
+  sender_email text not null,
+  sender_name text,
+  status text default 'pending',
+  error_message text,
+  sent_at timestamptz,
+  template_id uuid references public.email_templates(id),
+  retry_count integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table public.email_campaigns (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  description text,
+  template_id uuid references public.email_templates(id),
+  sender_id uuid references public.senders(id),
+  total_recipients integer default 0,
+  status text default 'draft',
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Force disable RLS on all tables
+alter table public.contacts set (security_invoker = false);
+alter table public.senders set (security_invoker = false);
+alter table public.email_templates set (security_invoker = false);
+alter table public.email_logs set (security_invoker = false);
+alter table public.email_campaigns set (security_invoker = false);
+
 alter table public.contacts disable row level security;
 alter table public.senders disable row level security;
 alter table public.email_templates disable row level security;
@@ -173,7 +252,7 @@ grant all on table public.senders to anon, authenticated, service_role;
 grant all on table public.email_templates to anon, authenticated, service_role;
 grant all on table public.email_logs to anon, authenticated, service_role;
 grant all on table public.email_campaigns to anon, authenticated, service_role;
-grant usage on schema public to anon, authenticated, service_role;
+grant all on schema public to anon, authenticated, service_role;
 
 -- 4. VERIFICATION
 -- All 'relrowsecurity' should be 'f'
