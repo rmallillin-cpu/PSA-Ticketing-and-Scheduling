@@ -7,8 +7,8 @@
   const win = typeof window !== "undefined" ? window : {};
   const env = win.__APP_ENV__ || {};
 
-  const DEFAULT_SUPABASE_URL = "https://zbagbzgrithrjwcfktda.supabase.co";
-  const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
+  const DEFAULT_SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
+  const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9maWR0ZGpvcWtjZnByd3RvbG1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MzcwMzUsImV4cCI6MjA5MjQxMzAzNX0.HLDXysP0PXVFs3cGqUUTciRdR_cb2q0zEi1s3wszYZY";
 
   const CONFIG = {
     supabase: {

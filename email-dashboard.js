@@ -28,8 +28,7 @@ class EmailDashboard {
             // Check for placeholder keys
             const client = getSupabaseClient();
             if (CONFIG.supabase.anonKey.startsWith('sb_publishable_') || CONFIG.supabase.anonKey === 'your-anon-key-here') {
-                this.showToast('CRITICAL: Supabase keys not configured. Click the "Setup Guide" below.', 'error');
-                this.showSetupHelper();
+                this.showToast('CRITICAL: Supabase keys not configured.', 'error');
             }
 
             // Check authentication
@@ -1071,61 +1070,6 @@ class EmailDashboard {
                 employeeSearchEl.addEventListener('input', (e) => renderUsers(e.target.value));
             }
         }
-    }
-
-    showSetupHelper() {
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.85)';
-        overlay.style.zIndex = '9999';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.color = '#fff';
-        overlay.style.padding = '20px';
-        overlay.style.fontFamily = 'Manrope, sans-serif';
-
-        const content = document.createElement('div');
-        content.style.backgroundColor = '#1a1a1a';
-        content.style.padding = '30px';
-        content.style.borderRadius = '12px';
-        content.style.maxWidth = '600px';
-        content.style.border = '1px solid #ff4d4d';
-        content.style.boxShadow = '0 10px 30px rgba(255, 77, 77, 0.2)';
-
-        content.innerHTML = `
-            <h2 style="color: #ff4d4d; margin-top: 0;">❌ Supabase Authentication Failed</h2>
-            <p>Your dashboard is currently using <strong>placeholder API keys</strong>. To fix the 401 (Unauthorized) error, you must update the keys in your code.</p>
-            
-            <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0; font-size: 16px;">1. Go to Supabase Dashboard</h3>
-                <a href="https://supabase.com/dashboard/project/zbagbzgrithrjwcfktda/settings/api" target="_blank" style="color: #4da6ff; text-decoration: underline;">Open API Settings for Project: zbagbzgrithrjwcfktda</a>
-                
-                <h3 style="margin-top: 15px; font-size: 16px;">2. Copy the "anon (public)" key</h3>
-                <p style="font-size: 14px; color: #aaa;">It starts with <code>eyJ...</code></p>
-                
-                <h3 style="margin-top: 15px; font-size: 16px;">3. Replace the keys in these files:</h3>
-                <ul style="font-size: 14px; color: #ddd; line-height: 1.6;">
-                    <li><code>config.js</code> at line 11</li>
-                    <li><code>common.js</code> at line 13</li>
-                </ul>
-            </div>
-            
-            <p style="font-size: 14px; color: #888;">Current Placeholder: <code>sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL</code></p>
-            
-            <button id="close-helper-btn" style="background: #444; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; width: 100%;">I understand, let me fix it</button>
-        `;
-
-        overlay.appendChild(content);
-        document.body.appendChild(overlay);
-
-        document.getElementById('close-helper-btn').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-        });
     }
 }
 
