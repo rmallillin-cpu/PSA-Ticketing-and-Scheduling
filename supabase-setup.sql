@@ -75,8 +75,11 @@ set data = jsonb_set(
 where id = 1;
 
 -- Email Dashboard Tables
+-- Force recreate to ensure correct schema and policies
+
 -- Contacts Table
-create table if not exists public.contacts (
+drop table if exists public.contacts cascade;
+create table public.contacts (
   id uuid default gen_random_uuid() primary key,
   name text not null,
   email text not null,
@@ -89,15 +92,9 @@ create table if not exists public.contacts (
   updated_at timestamptz default now()
 );
 
-alter table public.contacts enable row level security;
-
-create policy "contacts_all_policy" on public.contacts
-  for all to anon, authenticated
-  using (true)
-  with check (true);
-
 -- Senders Table
-create table if not exists public.senders (
+drop table if exists public.senders cascade;
+create table public.senders (
   id uuid default gen_random_uuid() primary key,
   name text not null,
   email text not null,
@@ -107,15 +104,9 @@ create table if not exists public.senders (
   updated_at timestamptz default now()
 );
 
-alter table public.senders enable row level security;
-
-create policy "senders_all_policy" on public.senders
-  for all to anon, authenticated
-  using (true)
-  with check (true);
-
 -- Email Templates Table
-create table if not exists public.email_templates (
+drop table if exists public.email_templates cascade;
+create table public.email_templates (
   id uuid default gen_random_uuid() primary key,
   title text not null,
   subject text not null,
@@ -128,15 +119,9 @@ create table if not exists public.email_templates (
   updated_at timestamptz default now()
 );
 
-alter table public.email_templates enable row level security;
-
-create policy "email_templates_all_policy" on public.email_templates
-  for all to anon, authenticated
-  using (true)
-  with check (true);
-
 -- Email Logs Table
-create table if not exists public.email_logs (
+drop table if exists public.email_logs cascade;
+create table public.email_logs (
   id uuid default gen_random_uuid() primary key,
   recipient_email text not null,
   recipient_name text,
@@ -153,15 +138,9 @@ create table if not exists public.email_logs (
   updated_at timestamptz default now()
 );
 
-alter table public.email_logs enable row level security;
-
-create policy "email_logs_all_policy" on public.email_logs
-  for all to anon, authenticated
-  using (true)
-  with check (true);
-
 -- Email Campaigns Table
-create table if not exists public.email_campaigns (
+drop table if exists public.email_campaigns cascade;
+create table public.email_campaigns (
   id uuid default gen_random_uuid() primary key,
   name text not null,
   description text,
@@ -174,14 +153,30 @@ create table if not exists public.email_campaigns (
   updated_at timestamptz default now()
 );
 
+-- Enable RLS on all tables
+alter table public.contacts enable row level security;
+alter table public.senders enable row level security;
+alter table public.email_templates enable row level security;
+alter table public.email_logs enable row level security;
 alter table public.email_campaigns enable row level security;
 
-create policy "email_campaigns_all_policy" on public.email_campaigns
-  for all to anon, authenticated
-  using (true)
-  with check (true);
+-- Create ultra-permissive policies for development
+-- These allow anyone with the API key to perform any action
+create policy "dev_contacts_policy" on public.contacts for all to anon, authenticated using (true) with check (true);
+create policy "dev_senders_policy" on public.senders for all to anon, authenticated using (true) with check (true);
+create policy "dev_templates_policy" on public.email_templates for all to anon, authenticated using (true) with check (true);
+create policy "dev_logs_policy" on public.email_logs for all to anon, authenticated using (true) with check (true);
+create policy "dev_campaigns_policy" on public.email_campaigns for all to anon, authenticated using (true) with check (true);
 
--- Seed initial sender if none exists
+-- Explicitly grant permissions to anon and authenticated roles
+grant all on table public.contacts to anon, authenticated;
+grant all on table public.senders to anon, authenticated;
+grant all on table public.email_templates to anon, authenticated;
+grant all on table public.email_logs to anon, authenticated;
+grant all on table public.email_campaigns to anon, authenticated;
+grant usage on schema public to anon, authenticated;
+
+-- Seed initial sender
 insert into public.senders (name, email, display_name)
 values ('PSA Administration', 'admin@psa-portal.com', 'PSA Admin')
 on conflict do nothing;
