@@ -191,8 +191,10 @@ async function handleSendEmail(req: SendEmailRequest): Promise<Response> {
 }
 
 serve(async (req) => {
+  const { method } = req;
+
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
+  if (method === "OPTIONS") {
     return new Response("ok", { 
       status: 200, 
       headers: corsHeaders 
@@ -201,9 +203,9 @@ serve(async (req) => {
 
   try {
     // Only allow POST
-    if (req.method !== "POST") {
+    if (method !== "POST") {
       return new Response(
-        JSON.stringify({ success: false, error: "Method not allowed" }), 
+        JSON.stringify({ success: false, error: `Method ${method} not allowed` }), 
         {
           status: 405,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -212,13 +214,19 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+    console.log("Received request body:", body);
+    
     return await handleSendEmail(body);
   } catch (error) {
     console.error("Critical error in serve:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "An unexpected error occurred",
+        details: error.stack
+      }),
       {
-        status: 400,
+        status: error instanceof SyntaxError ? 400 : 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
