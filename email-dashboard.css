@@ -199,6 +199,32 @@ body[data-page-kind="email-dashboard"] .form-group label {
   color: #173a61;
 }
 
+body[data-page-kind="email-dashboard"] .label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+body[data-page-kind="email-dashboard"] .label-row label {
+  margin-bottom: 0;
+}
+
+body[data-page-kind="email-dashboard"] .btn-link {
+  background: none;
+  border: none;
+  color: #0f5db6;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+body[data-page-kind="email-dashboard"] .btn-link:hover {
+  text-decoration: underline;
+}
+
 body[data-page-kind="email-dashboard"] .form-control {
   width: 100%;
   min-height: 34px;

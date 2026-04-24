@@ -101,9 +101,19 @@ class EmailDashboard {
             this.openContactModal();
         });
 
+        // Add sender button
+        document.getElementById('add-sender-btn').addEventListener('click', () => {
+            this.openSenderModal();
+        });
+
         // Contact modal buttons
         document.getElementById('save-contact-btn').addEventListener('click', () => {
             this.saveContact();
+        });
+
+        // Sender modal buttons
+        document.getElementById('save-sender-btn').addEventListener('click', () => {
+            this.saveSender();
         });
 
         // Tab switching
@@ -751,6 +761,45 @@ class EmailDashboard {
         } catch (error) {
             console.error('Error saving contact:', error);
             this.showToast('Error saving contact: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Open sender modal
+     */
+    openSenderModal() {
+        document.getElementById('sender-name').value = '';
+        document.getElementById('sender-email').value = '';
+        document.getElementById('sender-display-name').value = '';
+        document.getElementById('sender-modal').classList.remove('hidden');
+    }
+
+    /**
+     * Save sender
+     */
+    async saveSender() {
+        const name = document.getElementById('sender-name').value.trim();
+        const email = document.getElementById('sender-email').value.trim();
+        const displayName = document.getElementById('sender-display-name').value.trim();
+
+        if (!name || !email) {
+            this.showToast('Name and email are required', 'error');
+            return;
+        }
+
+        if (!EmailComposer.isValidEmail(email)) {
+            this.showToast('Invalid email address', 'error');
+            return;
+        }
+
+        try {
+            await ApiService.createSender({ name, email, displayName });
+            this.showToast('Sender added successfully', 'success');
+            document.getElementById('sender-modal').classList.add('hidden');
+            await this.loadSenders();
+        } catch (error) {
+            console.error('Error saving sender:', error);
+            this.showToast('Error saving sender: ' + error.message, 'error');
         }
     }
 
