@@ -73,3 +73,115 @@ set data = jsonb_set(
   true
 )
 where id = 1;
+
+-- Email Dashboard Tables
+-- Contacts Table
+create table if not exists public.contacts (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  phone text,
+  company text,
+  tags text[] default '{}',
+  notes text,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.contacts enable row level security;
+
+create policy "contacts_all_policy" on public.contacts
+  for all to anon, authenticated
+  using (true)
+  with check (true);
+
+-- Senders Table
+create table if not exists public.senders (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  email text not null,
+  display_name text,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.senders enable row level security;
+
+create policy "senders_all_policy" on public.senders
+  for all to anon, authenticated
+  using (true)
+  with check (true);
+
+-- Email Templates Table
+create table if not exists public.email_templates (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  subject text not null,
+  body text not null,
+  description text,
+  variables text[] default '{}',
+  is_active boolean default true,
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.email_templates enable row level security;
+
+create policy "email_templates_all_policy" on public.email_templates
+  for all to anon, authenticated
+  using (true)
+  with check (true);
+
+-- Email Logs Table
+create table if not exists public.email_logs (
+  id uuid default gen_random_uuid() primary key,
+  recipient_email text not null,
+  recipient_name text,
+  subject text not null,
+  message_body text,
+  sender_email text not null,
+  sender_name text,
+  status text default 'pending',
+  error_message text,
+  sent_at timestamptz,
+  template_id uuid references public.email_templates(id),
+  retry_count integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.email_logs enable row level security;
+
+create policy "email_logs_all_policy" on public.email_logs
+  for all to anon, authenticated
+  using (true)
+  with check (true);
+
+-- Email Campaigns Table
+create table if not exists public.email_campaigns (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  description text,
+  template_id uuid references public.email_templates(id),
+  sender_id uuid references public.senders(id),
+  total_recipients integer default 0,
+  status text default 'draft',
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.email_campaigns enable row level security;
+
+create policy "email_campaigns_all_policy" on public.email_campaigns
+  for all to anon, authenticated
+  using (true)
+  with check (true);
+
+-- Seed initial sender if none exists
+insert into public.senders (name, email, display_name)
+values ('PSA Administration', 'admin@psa-portal.com', 'PSA Admin')
+on conflict do nothing;
