@@ -288,8 +288,29 @@ class EmailDashboard {
                 info.appendChild(tagsDiv);
             }
 
+            const actions = document.createElement('div');
+            actions.className = 'contact-actions';
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn tiny secondary';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => {
+                this.openContactModal(contact);
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn tiny danger';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => {
+                this.deleteContact(contact.id);
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+
             div.appendChild(checkbox);
             div.appendChild(info);
+            div.appendChild(actions);
             container.appendChild(div);
         });
 
@@ -765,6 +786,24 @@ class EmailDashboard {
     }
 
     /**
+     * Delete contact
+     */
+    async deleteContact(contactId) {
+        if (!confirm('Delete this contact?')) {
+            return;
+        }
+
+        try {
+            await ApiService.deleteContact(contactId);
+            this.showToast('Contact deleted', 'success');
+            await this.loadContacts();
+        } catch (error) {
+            console.error('Error deleting contact:', error);
+            this.showToast('Error deleting contact: ' + error.message, 'error');
+        }
+    }
+
+    /**
      * Open sender modal
      */
     openSenderModal() {
@@ -879,7 +918,7 @@ class EmailDashboard {
      * Show toast notification
      */
     showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
+        const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;

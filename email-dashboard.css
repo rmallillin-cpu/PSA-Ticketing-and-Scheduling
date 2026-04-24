@@ -153,6 +153,28 @@ body[data-page-kind="email-dashboard"] .tag {
   color: #0f5db6;
 }
 
+body[data-page-kind="email-dashboard"] .contact-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+body[data-page-kind="email-dashboard"] .contact-actions .btn {
+  padding: 4px 8px;
+  font-size: 0.72rem;
+}
+
+body[data-page-kind="email-dashboard"] .btn.danger {
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
+}
+
+body[data-page-kind="email-dashboard"] .btn.danger:hover {
+  background: #a31f1f;
+}
+
 body[data-page-kind="email-dashboard"] .tabs {
   display: flex;
   border-bottom: 1px solid rgba(149, 176, 216, 0.35);
@@ -454,42 +476,6 @@ body[data-page-kind="email-dashboard"] #preview-content {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-body[data-page-kind="email-dashboard"] .toast-container {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 2000;
-  display: grid;
-  gap: 8px;
-  max-width: 380px;
-}
-
-body[data-page-kind="email-dashboard"] .toast {
-  border-radius: 10px;
-  border: 1px solid rgba(149, 176, 216, 0.5);
-  background: rgba(255, 255, 255, 0.96);
-  padding: 10px 12px;
-  font-size: 0.82rem;
-  color: #16385f;
-  box-shadow: 0 10px 24px rgba(8, 50, 98, 0.16);
-}
-
-body[data-page-kind="email-dashboard"] .toast.success {
-  border-left: 3px solid #2e7d32;
-}
-
-body[data-page-kind="email-dashboard"] .toast.error {
-  border-left: 3px solid #c62828;
-}
-
-body[data-page-kind="email-dashboard"] .toast.warning {
-  border-left: 3px solid #e38b00;
-}
-
-body[data-page-kind="email-dashboard"] .toast.info {
-  border-left: 3px solid #0f5db6;
 }
 
 @media (max-width: 1200px) {
