@@ -578,7 +578,8 @@ body[data-page-kind="calendar"] a[href="calendar.html"],
 body[data-page-kind="ticket"] a[href="ticket.html"],
 body[data-page-kind="accomplishment"] a[href="accomplishment.html"],
 body[data-page-kind="admin-logs"] a[href="admin-logs.html"],
-body[data-page-kind="dashboard"] a[href="dashboard.html"] {
+body[data-page-kind="dashboard"] a[href="dashboard.html"],
+body[data-page-kind="email-dashboard"] a[href="email-dashboard.html"] {
   background: linear-gradient(130deg, var(--primary), #1e7de6);
   color: #fff;
   border-color: transparent;
