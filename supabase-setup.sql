@@ -87,10 +87,7 @@ drop table if exists public.email_templates cascade;
 drop table if exists public.senders cascade;
 drop table if exists public.contacts cascade;
 
--- 2. RECREATE TABLES WITHOUT RLS
--- (Note: RLS is OFF by default for new tables)
-
--- Contacts Table
+-- 2. RECREATE TABLES
 create table public.contacts (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -104,7 +101,6 @@ create table public.contacts (
   updated_at timestamptz default now()
 );
 
--- Senders Table
 create table public.senders (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -115,7 +111,6 @@ create table public.senders (
   updated_at timestamptz default now()
 );
 
--- Email Templates Table
 create table public.email_templates (
   id uuid default gen_random_uuid() primary key,
   title text not null,
@@ -129,7 +124,6 @@ create table public.email_templates (
   updated_at timestamptz default now()
 );
 
--- Email Logs Table
 create table public.email_logs (
   id uuid default gen_random_uuid() primary key,
   recipient_email text not null,
@@ -147,7 +141,6 @@ create table public.email_logs (
   updated_at timestamptz default now()
 );
 
--- Email Campaigns Table
 create table public.email_campaigns (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -162,78 +155,6 @@ create table public.email_campaigns (
 );
 
 -- 3. UNLOCK EVERYTHING (Disable RLS and Grant Permissions)
-drop table if exists public.email_campaigns cascade;
-drop table if exists public.email_logs cascade;
-drop table if exists public.email_templates cascade;
-drop table if exists public.senders cascade;
-drop table if exists public.contacts cascade;
-
-create table public.contacts (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  email text not null,
-  phone text,
-  company text,
-  tags text[] default '{}',
-  notes text,
-  is_active boolean default true,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table public.senders (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  email text not null,
-  display_name text,
-  is_active boolean default true,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table public.email_templates (
-  id uuid default gen_random_uuid() primary key,
-  title text not null,
-  subject text not null,
-  body text not null,
-  description text,
-  variables text[] default '{}',
-  is_active boolean default true,
-  created_by uuid references auth.users(id),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table public.email_logs (
-  id uuid default gen_random_uuid() primary key,
-  recipient_email text not null,
-  recipient_name text,
-  subject text not null,
-  message_body text,
-  sender_email text not null,
-  sender_name text,
-  status text default 'pending',
-  error_message text,
-  sent_at timestamptz,
-  template_id uuid references public.email_templates(id),
-  retry_count integer default 0,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table public.email_campaigns (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  description text,
-  template_id uuid references public.email_templates(id),
-  sender_id uuid references public.senders(id),
-  total_recipients integer default 0,
-  status text default 'draft',
-  created_by uuid references auth.users(id),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
 -- Force disable RLS on all tables
 alter table public.contacts set (security_invoker = false);
 alter table public.senders set (security_invoker = false);
