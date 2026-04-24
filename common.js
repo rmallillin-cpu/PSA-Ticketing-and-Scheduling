@@ -618,9 +618,36 @@ function mergePortalState(remoteData, localData) {
       return;
     }
 
+    if (key === STORAGE_KEYS.users) {
+      merged[key] = mergeUsers(remoteData[key], localData[key]);
+      return;
+    }
+
     merged[key] = mergeById(remoteData[key], localData[key]);
   });
   return merged;
+}
+
+function mergeUsers(remoteArr, localArr) {
+  const map = new Map();
+  const list = [...(Array.isArray(remoteArr) ? remoteArr : []), ...(Array.isArray(localArr) ? localArr : [])];
+  
+  list.forEach((u) => {
+    if (!u || typeof u !== "object") return;
+    // Prefer username, then email, then id as a unique key for users
+    const key = (u.username || u.email || u.id || JSON.stringify(u)).toLowerCase();
+    
+    if (map.has(key)) {
+      // If we have a duplicate, prefer the one with more data or the newer one
+      const existing = map.get(key);
+      const isNewer = (u.updatedAt || u.createdAt || "") > (existing.updatedAt || existing.createdAt || "");
+      if (isNewer) map.set(key, u);
+    } else {
+      map.set(key, u);
+    }
+  });
+
+  return Array.from(map.values());
 }
 
 function mergeById(remoteArr, localArr) {

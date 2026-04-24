@@ -1043,7 +1043,18 @@ class EmailDashboard {
                 }
 
                 const keyword = String(searchText || '').trim().toLowerCase();
-                const filtered = users.filter((u) => {
+                
+                // Deduplicate users by username or email before filtering
+                const uniqueUsersMap = new Map();
+                users.forEach(u => {
+                    const key = (u.username || u.email || u.id || JSON.stringify(u)).toLowerCase();
+                    if (!uniqueUsersMap.has(key)) {
+                        uniqueUsersMap.set(key, u);
+                    }
+                });
+                const uniqueUsers = Array.from(uniqueUsersMap.values());
+
+                const filtered = uniqueUsers.filter((u) => {
                     const haystack = `${u.fullname || ''} ${u.username || ''} ${u.department || ''}`.toLowerCase();
                     return !keyword || haystack.includes(keyword);
                 });
