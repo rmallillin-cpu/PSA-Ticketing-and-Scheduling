@@ -11,8 +11,8 @@ const STORAGE_KEYS = {
 };
 const SUPABASE_URL = "https://zbagbzgrithrjwcfktda.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
-if (SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_')) {
-  console.warn("WARNING: SUPABASE_PUBLISHABLE_KEY in common.js looks like a placeholder. It should usually be a long JWT starting with 'eyJ'.");
+if (SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_') || SUPABASE_PUBLISHABLE_KEY === 'your-anon-key-here') {
+  console.error("❌ CRITICAL ERROR: SUPABASE_PUBLISHABLE_KEY in common.js is a placeholder. Cloud features will fail.");
 }
 const CLOUD_STATE_TABLE = "portal_state";
 const CLOUD_STATE_ROW_ID = 1;

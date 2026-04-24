@@ -35,11 +35,11 @@
     }
   };
 
-  if (!CONFIG.supabase.url) {
-    console.warn("WARNING: Supabase URL not configured");
-  }
-  if (!CONFIG.supabase.anonKey || CONFIG.supabase.anonKey.startsWith('sb_publishable_')) {
-    console.warn("WARNING: Supabase Anon Key looks like a placeholder or is invalid. It should usually start with 'eyJ'.");
+  if (!CONFIG.supabase.anonKey || CONFIG.supabase.anonKey.startsWith('sb_publishable_') || CONFIG.supabase.anonKey === 'your-anon-key-here') {
+    console.error("❌ CRITICAL ERROR: Supabase Anon Key is NOT configured. Authentication will fail.");
+    console.warn("Please replace the placeholder key in config.js and common.js with your real 'anon (public)' key from the Supabase Dashboard.");
+  } else if (!CONFIG.supabase.anonKey.startsWith('eyJ')) {
+    console.warn("⚠️ WARNING: Supabase Anon Key format looks unusual. It should usually be a long string starting with 'eyJ'.");
   }
 
   win.CONFIG = CONFIG;
