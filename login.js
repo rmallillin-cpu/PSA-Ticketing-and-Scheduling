@@ -67,8 +67,13 @@ function initLogin() {
 async function doLogin() {
   const username = loginEls.loginUsername.value.trim();
   const password = loginEls.loginPassword.value;
+  const normalizedUsername = username.toLowerCase();
 
-  const user = getUsers().find((u) => u.username === username && u.password === password);
+  const user = getUsers().find(
+    (u) =>
+      String(u.username || "").trim().toLowerCase() === normalizedUsername &&
+      u.password === password
+  );
 
   if (!user) {
     notify("Invalid username or password.", "error");

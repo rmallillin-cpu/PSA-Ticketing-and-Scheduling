@@ -12,6 +12,8 @@ class EmailDashboard {
         this.currentSender = null;
         this.currentTemplate = null;
         this.editingContactId = null;
+        this.portalUser = null;
+        this.supabaseUser = null;
     }
 
     /**
@@ -24,15 +26,28 @@ class EmailDashboard {
             await initSupabase();
 
             // Check authentication
-            const isAuth = await isAuthenticated();
-            if (!isAuth) {
+            this.portalUser = this.getPortalUserFromStorage();
+            const isAuth = await isAuthenticated().catch(() => false);
+            this.supabaseUser = isAuth ? await getCurrentUser().catch(() => null) : null;
+
+            if (!this.supabaseUser && this.portalUser) {
+                this.supabaseUser = await this.ensureSupabaseAuthFromPortalUser(this.portalUser);
+            }
+
+            if (!this.portalUser && !this.supabaseUser) {
                 this.redirectToLogin();
                 return;
             }
 
-            // Load user info
-            const user = await getCurrentUser();
-            document.getElementById('user-email').textContent = user?.email || 'User';
+            this.hydrateSidebar();
+            document.getElementById('user-email').textContent =
+                this.supabaseUser?.email || this.portalUser?.email || 'Portal User';
+
+            if (!this.supabaseUser) {
+                this.setupEventListeners();
+                this.showToast('Supabase authentication failed. Email data tabs are unavailable for this account.', 'error');
+                return;
+            }
 
             // Load initial data
             await Promise.all([
@@ -823,7 +838,8 @@ class EmailDashboard {
      */
     async logout() {
         try {
-            await signOut();
+            localStorage.removeItem('psa_session');
+            await signOut().catch(() => null);
             this.redirectToLogin();
         } catch (error) {
             console.error('Error logging out:', error);
@@ -837,6 +853,132 @@ class EmailDashboard {
     redirectToLogin() {
         window.location.href = 'login.html';
     }
+
+    async ensureSupabaseAuthFromPortalUser(user) {
+        try {
+            const client = getSupabaseClient();
+            const email = String(user?.email || '').trim().toLowerCase();
+            const password = String(user?.password || '');
+            if (!email || !password) return null;
+
+            const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (!signInError && signInData?.user) {
+                return signInData.user;
+            }
+
+            const { error: signUpError } = await client.auth.signUp({
+                email,
+                password
+            });
+
+            if (signUpError && !String(signUpError.message || '').toLowerCase().includes('already')) {
+                return null;
+            }
+
+            const { data: retrySignInData, error: retrySignInError } = await client.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (retrySignInError) return null;
+            return retrySignInData?.user || null;
+        } catch {
+            return null;
+        }
+    }
+
+    getPortalUserFromStorage() {
+        try {
+            const sessionRaw = localStorage.getItem('psa_session');
+            const usersRaw = localStorage.getItem('psa_users');
+            if (!sessionRaw || !usersRaw) return null;
+
+            const session = JSON.parse(sessionRaw);
+            const users = JSON.parse(usersRaw);
+            if (!session?.userId || !Array.isArray(users)) return null;
+
+            return users.find((u) => u.id === session.userId) || null;
+        } catch {
+            return null;
+        }
+    }
+
+    hydrateSidebar() {
+        const user = this.portalUser;
+        if (!user) return;
+
+        const welcomeEl = document.getElementById('welcomeText');
+        const metaEl = document.getElementById('userMeta');
+        const avatarEl = document.getElementById('announceAvatar');
+        const adminLogsBtn = document.getElementById('openAdminLogsPanelBtn');
+        const employeeListEl = document.getElementById('employeeNameList');
+        const employeeSearchEl = document.getElementById('employeeSearchInput');
+        const cloudSyncEl = document.getElementById('cloudSyncStatus');
+        const timeInEl = document.getElementById('timeInStatus');
+
+        if (welcomeEl) {
+            welcomeEl.textContent = `Welcome, ${user.fullname || user.username || 'User'}`;
+        }
+        if (metaEl) {
+            const role = (user.role || 'user').toLowerCase();
+            metaEl.textContent = `${user.employeeCode || '-'} | ${user.department || '-'} | ${user.position || '-'} | ${role}`;
+        }
+        if (avatarEl && user.profilePicture) {
+            avatarEl.src = user.profilePicture;
+        }
+        if (adminLogsBtn) {
+            const isAdmin = (user.role || '').toLowerCase() === 'admin';
+            adminLogsBtn.classList.toggle('hidden', !isAdmin);
+        }
+        if (cloudSyncEl) {
+            cloudSyncEl.textContent = 'Cloud sync: connected';
+        }
+        if (timeInEl) {
+            timeInEl.textContent = '';
+        }
+
+        if (employeeListEl) {
+            const renderUsers = (searchText = '') => {
+                let users = [];
+                try {
+                    users = JSON.parse(localStorage.getItem('psa_users') || '[]');
+                } catch {
+                    users = [];
+                }
+
+                const keyword = String(searchText || '').trim().toLowerCase();
+                const filtered = users.filter((u) => {
+                    const haystack = `${u.fullname || ''} ${u.username || ''} ${u.department || ''}`.toLowerCase();
+                    return !keyword || haystack.includes(keyword);
+                });
+
+                employeeListEl.innerHTML = '';
+                if (filtered.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'employee-name-btn';
+                    empty.textContent = 'No employees found';
+                    employeeListEl.appendChild(empty);
+                    return;
+                }
+
+                filtered.forEach((u) => {
+                    const chip = document.createElement('div');
+                    chip.className = 'employee-name-btn';
+                    chip.textContent = (u.fullname || u.username || 'Employee').toUpperCase();
+                    employeeListEl.appendChild(chip);
+                });
+            };
+
+            renderUsers();
+            if (employeeSearchEl) {
+                employeeSearchEl.addEventListener('input', (e) => renderUsers(e.target.value));
+            }
+        }
+    }
 }
 
 // Initialize dashboard on page load
@@ -845,3 +987,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     dashboard = new EmailDashboard();
     await dashboard.init();
 });
+
+
