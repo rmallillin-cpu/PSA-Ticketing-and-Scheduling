@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="email-dashboard.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📧 Email Management System</h1>
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <button id="logout-btn" class="btn btn-secondary btn-sm">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="email-dashboard">
+            <!-- Left Panel: Contacts -->
+            <div class="contacts-panel">
+                <div class="panel-header">
+                    <h2>Contacts</h2>
+                    <button id="add-contact-btn" class="btn btn-primary btn-sm">+ Add Contact</button>
+                </div>
+
+                <!-- Contact Filters -->
+                <div class="contact-filters">
+                    <input 
+                        type="text" 
+                        id="contact-search" 
+                        placeholder="Search contacts..." 
+                        class="form-control"
+                    >
+                    <select id="tag-filter" class="form-control">
+                        <option value="">All Tags</option>
+                    </select>
+                </div>
+
+                <!-- Select All Checkbox -->
+                <div class="select-all-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="select-all-contacts" />
+                        <span>Select All</span>
+                    </label>
+                    <span id="selection-count" class="selection-count">0 selected</span>
+                </div>
+
+                <!-- Contacts List -->
+                <div class="contacts-list">
+                    <div id="contacts-table" class="table-container">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Email Composer -->
+            <div class="composer-panel">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="compose">Compose</button>
+                    <button class="tab-btn" data-tab="templates">Templates</button>
+                    <button class="tab-btn" data-tab="logs">Logs</button>
+                </div>
+
+                <!-- Compose Tab -->
+                <div class="tab-content active" id="compose-tab">
+                    <div class="composer-form">
+                        <!-- Sender Selection -->
+                        <div class="form-group">
+                            <label for="sender-select">From (Sender):</label>
+                            <select id="sender-select" class="form-control">
+                                <option value="">Select sender...</option>
+                            </select>
+                            <small class="form-text">Choose the sender identity</small>
+                        </div>
+
+                        <!-- Template Selection -->
+                        <div class="form-group">
+                            <label for="template-select">Template:</label>
+                            <select id="template-select" class="form-control">
+                                <option value="">Custom Email</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject -->
+                        <div class="form-group">
+                            <label for="email-subject">Subject:</label>
+                            <input 
+                                type="text" 
+                                id="email-subject" 
+                                class="form-control" 
+                                placeholder="Email subject..."
+                            >
+                            <small class="form-text">Use {{name}} for recipient name, {{email}} for recipient email</small>
+                        </div>
+
+                        <!-- Message Body -->
+                        <div class="form-group">
+                            <label for="email-body">Message:</label>
+                            <textarea 
+                                id="email-body" 
+                                class="form-control" 
+                                rows="10" 
+                                placeholder="Email message body...&#10;Use {{name}} for recipient name, {{sender}} for sender name, {{email}} for recipient email"
+                            ></textarea>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="form-group">
+                            <button id="preview-btn" class="btn btn-secondary">Preview with First Contact</button>
+                        </div>
+
+                        <!-- Email Preview Modal will go here -->
+                        <div id="preview-modal" class="modal hidden">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>Email Preview</h3>
+                                    <button class="close-btn">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="preview-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Send Status -->
+                        <div id="send-status" class="send-status hidden">
+                            <div class="status-content">
+                                <div class="spinner"></div>
+                                <div>
+                                    <p id="status-message">Sending emails...</p>
+                                    <p id="status-progress" class="progress-text">0/0 emails sent</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Send Buttons -->
+                        <div class="action-buttons">
+                            <button id="send-email-btn" class="btn btn-success">Send to Selected</button>
+                            <button id="clear-form-btn" class="btn btn-secondary">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Tab -->
+                <div class="tab-content" id="templates-tab">
+                    <div class="templates-section">
+                        <div class="section-header">
+                            <h3>Email Templates</h3>
+                            <button id="new-template-btn" class="btn btn-primary btn-sm">+ New Template</button>
+                        </div>
+
+                        <div id="templates-list" class="templates-list">
+                            <!-- Populated by JavaScript -->
+                        </div>
+
+                        <!-- New Template Modal -->
+                        <div id="template-modal" class="modal hidden">
+                            <div class="modal-content modal-lg">
+                                <div class="modal-header">
+                                    <h3>Create/Edit Template</h3>
+                                    <button class="close-btn">&times;</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="template-title">Title:</label>
+                                        <input 
+                                            type="text" 
+                                            id="template-title" 
+                                            class="form-control" 
+                                            placeholder="Template name..."
+                                        >
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="template-subject">Subject:</label>
+                                        <input 
+                                            type="text" 
+                                            id="template-subject" 
+                                            class="form-control" 
+                                            placeholder="Email subject..."
+                                        >
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="template-body">Body:</label>
+                                        <textarea 
+                                            id="template-body" 
+                                            class="form-control" 
+                                            rows="8" 
+                                            placeholder="Email body..."
+                                        ></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button id="save-template-btn" class="btn btn-primary">Save Template</button>
+                                    <button class="close-modal-btn btn btn-secondary">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Tab -->
+                <div class="tab-content" id="logs-tab">
+                    <div class="logs-section">
+                        <div class="section-header">
+                            <h3>Email Logs</h3>
+                            <div class="log-filters">
+                                <select id="log-status-filter" class="form-control form-control-sm">
+                                    <option value="">All Status</option>
+                                    <option value="sent">Sent</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                                <button id="retry-failed-btn" class="btn btn-warning btn-sm">Retry Failed</button>
+                            </div>
+                        </div>
+
+                        <div id="logs-table" class="table-container">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Contact Modal -->
+        <div id="contact-modal" class="modal hidden">
+            <div class="modal-content modal-md">
+                <div class="modal-header">
+                    <h3 id="modal-title">Add Contact</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="contact-name">Name:</label>
+                        <input 
+                            type="text" 
+                            id="contact-name" 
+                            class="form-control" 
+                            placeholder="Full name..."
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Email:</label>
+                        <input 
+                            type="email" 
+                            id="contact-email" 
+                            class="form-control" 
+                            placeholder="Email address..."
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-phone">Phone (optional):</label>
+                        <input 
+                            type="tel" 
+                            id="contact-phone" 
+                            class="form-control" 
+                            placeholder="Phone number..."
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-company">Company (optional):</label>
+                        <input 
+                            type="text" 
+                            id="contact-company" 
+                            class="form-control" 
+                            placeholder="Company name..."
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-tags">Tags (comma-separated):</label>
+                        <input 
+                            type="text" 
+                            id="contact-tags" 
+                            class="form-control" 
+                            placeholder="e.g., VIP, Regular, Inactive"
+                        >
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-contact-btn" class="btn btn-primary">Save Contact</button>
+                    <button class="close-modal-btn btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="supabase-client.js"></script>
+    <script src="api-service.js"></script>
+    <script src="email-composer.js"></script>
+    <script src="email-dashboard.js"></script>
+</body>
+</html>

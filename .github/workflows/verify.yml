@@ -1,0 +1,113 @@
+name: Lint & Verify Email System
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Check Environment Configuration
+        run: |
+          if [ ! -f ".env.example" ]; then
+            echo "❌ .env.example file not found"
+            exit 1
+          fi
+          echo "✅ Environment configuration found"
+      
+      - name: Verify Database Schema Files
+        run: |
+          if [ ! -f "supabase/migrations/20260424_email_management_system.sql" ]; then
+            echo "❌ Database schema file not found"
+            exit 1
+          fi
+          echo "✅ Database schema file found"
+      
+      - name: Verify RLS Policies
+        run: |
+          if [ ! -f "supabase/migrations/20260424_rls_policies.sql" ]; then
+            echo "❌ RLS policies file not found"
+            exit 1
+          fi
+          echo "✅ RLS policies file found"
+      
+      - name: Verify Edge Functions
+        run: |
+          if [ ! -f "supabase/functions/send-email/index.ts" ]; then
+            echo "❌ send-email function not found"
+            exit 1
+          fi
+          if [ ! -f "supabase/functions/retry-failed-email/index.ts" ]; then
+            echo "❌ retry-failed-email function not found"
+            exit 1
+          fi
+          echo "✅ Edge functions found"
+      
+      - name: Verify Frontend Files
+        run: |
+          if [ ! -f "email-dashboard.html" ]; then
+            echo "❌ email-dashboard.html not found"
+            exit 1
+          fi
+          if [ ! -f "email-dashboard.css" ]; then
+            echo "❌ email-dashboard.css not found"
+            exit 1
+          fi
+          if [ ! -f "email-dashboard.js" ]; then
+            echo "❌ email-dashboard.js not found"
+            exit 1
+          fi
+          echo "✅ Frontend files found"
+      
+      - name: Verify JavaScript Services
+        run: |
+          for file in config.js supabase-client.js api-service.js email-composer.js; do
+            if [ ! -f "$file" ]; then
+              echo "❌ $file not found"
+              exit 1
+            fi
+          done
+          echo "✅ All JavaScript services found"
+      
+      - name: Verify Documentation
+        run: |
+          if [ ! -f "EMAIL_SETUP_GUIDE.md" ]; then
+            echo "❌ EMAIL_SETUP_GUIDE.md not found"
+            exit 1
+          fi
+          if [ ! -f "EMAIL_SYSTEM_README.md" ]; then
+            echo "❌ EMAIL_SYSTEM_README.md not found"
+            exit 1
+          fi
+          echo "✅ Documentation files found"
+      
+      - name: Check for Secrets in Code
+        run: |
+          # Check if any API keys are hardcoded
+          if grep -r "SG\." --include="*.js" --include="*.html" . 2>/dev/null; then
+            echo "⚠️ Warning: Possible SendGrid API key found in code"
+          fi
+          if grep -r "sk_" --include="*.js" --include="*.html" . 2>/dev/null; then
+            echo "⚠️ Warning: Possible API key found in code"
+          fi
+          echo "✅ Secret check complete"
+      
+      - name: Final Status
+        if: success()
+        run: echo "✅ All verification checks passed!"

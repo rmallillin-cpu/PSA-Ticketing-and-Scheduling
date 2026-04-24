@@ -1,0 +1,59 @@
+name: Deploy Email System to Supabase
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+      
+      - name: Deploy send-email Function
+        run: |
+          supabase functions deploy send-email \
+            --project-id ${{ secrets.SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      
+      - name: Deploy retry-failed-email Function
+        run: |
+          supabase functions deploy retry-failed-email \
+            --project-id ${{ secrets.SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      
+      - name: Verify Deployment
+        run: |
+          supabase functions list --project-id ${{ secrets.SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      
+      - name: Create Deployment Status
+        if: success()
+        run: |
+          echo "✅ Email System deployed to Supabase"
+          echo "Project ID: ${{ secrets.SUPABASE_PROJECT_ID }}"
+      
+      - name: Notify on Failure
+        if: failure()
+        run: echo "❌ Deployment failed"

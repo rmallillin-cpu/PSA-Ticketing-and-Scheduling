@@ -1,0 +1,56 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build outputs
+dist/
+build/
+out/
+
+# Logs
+*.log
+logs/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Supabase
+supabase/.branches/
+supabase/config.toml
+
+# Testing
+coverage/
+.nyc_output/
+
+# Local Supabase database
+.supabase/
+
+# Temporary files
+*.tmp
+*.bak
+
+# Node modules cache
+.npm/
+
+# API Keys (extra safety)
+*.key
+*.pem
+*.pub
+secrets.txt
+credentials.json
