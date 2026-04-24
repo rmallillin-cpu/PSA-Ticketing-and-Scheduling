@@ -156,12 +156,6 @@ create table public.email_campaigns (
 
 -- 3. UNLOCK EVERYTHING (Disable RLS and Grant Permissions)
 -- Force disable RLS on all tables
-alter table public.contacts set (security_invoker = false);
-alter table public.senders set (security_invoker = false);
-alter table public.email_templates set (security_invoker = false);
-alter table public.email_logs set (security_invoker = false);
-alter table public.email_campaigns set (security_invoker = false);
-
 alter table public.contacts disable row level security;
 alter table public.senders disable row level security;
 alter table public.email_templates disable row level security;
