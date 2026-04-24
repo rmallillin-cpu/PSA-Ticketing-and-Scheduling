@@ -2,7 +2,7 @@ param(
   [int]$IntervalSeconds = 15,
   [string]$Branch = 'main',
   [switch]$RunSupabase = $true,
-  [string]$SupabaseProjectRef = 'zbagbzgrithrjwcfktda',
+  [string]$SupabaseProjectRef = 'ofidtdjoqkcfprwtolms',
   [string]$SupabaseDbPassword = $env:SUPABASE_DB_PASSWORD
 )
 
