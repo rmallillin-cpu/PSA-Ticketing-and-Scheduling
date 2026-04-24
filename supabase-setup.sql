@@ -153,15 +153,14 @@ create table public.email_campaigns (
   updated_at timestamptz default now()
 );
 
--- DISABLE RLS for now to ensure connectivity works
--- You can re-enable this later for production
+-- DISABLE RLS completely for these tables to fix the 403 Forbidden error
 alter table public.contacts disable row level security;
 alter table public.senders disable row level security;
 alter table public.email_templates disable row level security;
 alter table public.email_logs disable row level security;
 alter table public.email_campaigns disable row level security;
 
--- Grant all permissions to everyone
+-- Explicitly grant ALL permissions to ALL roles to ensure access
 grant all on table public.contacts to anon, authenticated, service_role;
 grant all on table public.senders to anon, authenticated, service_role;
 grant all on table public.email_templates to anon, authenticated, service_role;
