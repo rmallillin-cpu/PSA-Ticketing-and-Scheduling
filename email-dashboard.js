@@ -21,6 +21,8 @@ class EmailDashboard {
         console.log('🚀 Initializing Email Dashboard...');
 
         try {
+            await initSupabase();
+
             // Check authentication
             const isAuth = await isAuthenticated();
             if (!isAuth) {
