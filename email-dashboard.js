@@ -910,8 +910,16 @@ class EmailDashboard {
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
         // Activate selected tab
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+        const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeTab) activeTab.classList.add('active');
+        
+        const activeContent = document.getElementById(`${tabName}-tab`);
+        if (activeContent) activeContent.classList.add('active');
+
+        // Refresh data if switching to logs tab
+        if (tabName === 'logs') {
+            this.loadEmailLogs();
+        }
     }
 
     /**

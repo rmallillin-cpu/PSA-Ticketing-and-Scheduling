@@ -1760,6 +1760,14 @@ table tbody tr:hover td {
   background: var(--queued);
 }
 
+.status-sent {
+  background: var(--success);
+}
+
+.status-failed {
+  background: var(--danger);
+}
+
 .modal {
   width: min(560px, 95vw);
   border: none;
