@@ -463,6 +463,17 @@ function bindEvents() {
     });
   }
 
+  if (el.chatMessageInput) {
+    el.chatMessageInput.addEventListener("input", autoresizeChatInput);
+    el.chatMessageInput.addEventListener("keydown", async (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        await sendChatMessage();
+      }
+    });
+    autoresizeChatInput();
+  }
+
   if (el.chatFileInput && el.chatSelectedFile) {
     el.chatFileInput.addEventListener("change", () => {
       const file = el.chatFileInput.files[0];
@@ -662,6 +673,7 @@ function initMessenger() {
   if (!el.employeeNameList) return;
   let users = getUniqueChatUsers(getUsers());
   const previousActiveChatUserId = state.activeChatUserId;
+  const { latestUserToken, latestUnreadUserToken } = getLatestConversationMeta();
   el.employeeNameList.innerHTML = "";
   if (el.chatEmployeeSelect) {
     el.chatEmployeeSelect.innerHTML = "";
@@ -716,6 +728,8 @@ function initMessenger() {
     el.chatForm.classList.remove("hidden");
   }
   const defaultChatUser = users.find((user) => normalizeToken(user.username || user.id) === normalizeToken(previousActiveChatUserId))
+    || users.find((user) => normalizeToken(user.username || user.id) === normalizeToken(latestUnreadUserToken))
+    || users.find((user) => normalizeToken(user.username || user.id) === normalizeToken(latestUserToken))
     || users.find((user) => user.id !== state.currentUser.id)
     || users[0];
   state.activeChatUserId = normalizeToken(defaultChatUser.username || defaultChatUser.id);
@@ -904,6 +918,56 @@ function mergeMessagesById(items) {
   return Array.from(byId.values());
 }
 
+function getLatestConversationMeta() {
+  if (!state.currentUser) return { latestUserToken: "", latestUnreadUserToken: "" };
+
+  const chats = getChats();
+  const currentId = normalizeToken(state.currentUser.id);
+  const currentUsername = normalizeToken(state.currentUser.username);
+  const latestByUser = new Map();
+  const latestUnreadByUser = new Map();
+
+  Object.values(chats).forEach((messages) => {
+    if (!Array.isArray(messages)) return;
+    messages.forEach((message) => {
+      if (!message || typeof message !== "object") return;
+
+      const senderId = normalizeToken(message.senderId);
+      const senderUsername = normalizeToken(message.senderUsername);
+      const receiverId = normalizeToken(message.receiverId);
+      const receiverUsername = normalizeToken(message.receiverUsername);
+      const mine = senderId === currentId || senderUsername === currentUsername;
+      const forMe = receiverId === currentId || receiverUsername === currentUsername;
+      let otherToken = "";
+
+      if (mine) {
+        otherToken = receiverUsername || receiverId;
+      } else if (forMe) {
+        otherToken = senderUsername || senderId;
+      }
+
+      if (!otherToken) return;
+
+      const createdAt = String(message.createdAt || "");
+      if (createdAt > String(latestByUser.get(otherToken) || "")) {
+        latestByUser.set(otherToken, createdAt);
+      }
+
+      const readBy = Array.isArray(message.readBy) ? message.readBy : [];
+      if (forMe && !readBy.includes(state.currentUser.id) && createdAt > String(latestUnreadByUser.get(otherToken) || "")) {
+        latestUnreadByUser.set(otherToken, createdAt);
+      }
+    });
+  });
+
+  const latestUserToken = Array.from(latestByUser.entries())
+    .sort((a, b) => String(b[1]).localeCompare(String(a[1])))[0]?.[0] || "";
+  const latestUnreadUserToken = Array.from(latestUnreadByUser.entries())
+    .sort((a, b) => String(b[1]).localeCompare(String(a[1])))[0]?.[0] || "";
+
+  return { latestUserToken, latestUnreadUserToken };
+}
+
 function getUniqueChatUsers(users) {
   if (!Array.isArray(users)) return [];
   const map = new Map();
@@ -1025,9 +1089,17 @@ async function sendChatMessage() {
   }
   el.chatForm.reset();
   el.chatSelectedFile.textContent = "No file selected";
+  autoresizeChatInput();
   playNotificationSound();
   renderChatThread();
   renderUnreadAlert();
+}
+
+function autoresizeChatInput() {
+  if (!el.chatMessageInput) return;
+  el.chatMessageInput.style.height = "auto";
+  const nextHeight = Math.max(44, Math.min(el.chatMessageInput.scrollHeight, 120));
+  el.chatMessageInput.style.height = `${nextHeight}px`;
 }
 
 function markConversationAsRead(otherUserId) {
@@ -1048,7 +1120,10 @@ function markConversationAsRead(otherUserId) {
     }
   });
 
-  if (changed) setConversationMessages(otherUserId, messages);
+  if (changed) {
+    setConversationMessages(otherUserId, messages);
+    scheduleCloudPush();
+  }
 }
 
 function renderChatThread() {
@@ -1183,6 +1258,7 @@ function renderChatThread() {
   });
 
   el.chatThread.scrollTop = el.chatThread.scrollHeight;
+  markConversationAsRead(otherUserId);
 }
 
 function editChatMessage(messageId) {
