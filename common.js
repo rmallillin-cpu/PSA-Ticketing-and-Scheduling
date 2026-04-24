@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   announcements: "psa_announcements",
   ticketCounter: "psa_ticket_counter"
 };
-const SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
+const SUPABASE_URL = "https://zbagbzgrithrjwcfktda.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
 if (SUPABASE_PUBLISHABLE_KEY.startsWith('sb_publishable_')) {
   console.warn("WARNING: SUPABASE_PUBLISHABLE_KEY in common.js looks like a placeholder. It should usually be a long JWT starting with 'eyJ'.");

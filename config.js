@@ -7,7 +7,7 @@
   const win = typeof window !== "undefined" ? window : {};
   const env = win.__APP_ENV__ || {};
 
-  const DEFAULT_SUPABASE_URL = "https://ofidtdjoqkcfprwtolms.supabase.co";
+  const DEFAULT_SUPABASE_URL = "https://zbagbzgrithrjwcfktda.supabase.co";
   const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_uH7HGPtFNw468aoIFd8ZHQ_PCtMf-XL";
 
   const CONFIG = {
