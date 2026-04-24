@@ -2,12 +2,12 @@
 -- Created: 2026-04-24
 
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- TABLE: senders
 -- Stores email sender identities for the organization
 CREATE TABLE IF NOT EXISTS senders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     display_name TEXT,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS senders (
 -- TABLE: contacts
 -- Stores contact directory with tags for filtering
 CREATE TABLE IF NOT EXISTS contacts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     tags TEXT[] DEFAULT '{}',
@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_contacts_tags ON contacts USING GIN(tags);
 -- TABLE: email_templates
 -- Stores reusable email templates with placeholders
 CREATE TABLE IF NOT EXISTS email_templates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     subject TEXT NOT NULL,
     body TEXT NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS email_templates (
 -- TABLE: email_logs
 -- Stores history of all sent emails for tracking and auditing
 CREATE TABLE IF NOT EXISTS email_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipient_email TEXT NOT NULL,
     recipient_name TEXT,
     subject TEXT NOT NULL,
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON email_logs(created_at DE
 -- TABLE: email_campaigns
 -- Optional: Track grouped email sends (campaigns)
 CREATE TABLE IF NOT EXISTS email_campaigns (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     template_id UUID REFERENCES email_templates(id) ON DELETE SET NULL,
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS email_campaigns (
 -- TABLE: campaign_recipients
 -- Links emails sent in campaigns to contacts
 CREATE TABLE IF NOT EXISTS campaign_recipients (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
     contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
     email_log_id UUID REFERENCES email_logs(id) ON DELETE SET NULL,
@@ -113,7 +113,7 @@ CREATE INDEX IF NOT EXISTS idx_campaign_recipients_contact ON campaign_recipient
 -- TABLE: contact_groups
 -- Optional: Organize contacts into groups
 CREATE TABLE IF NOT EXISTS contact_groups (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     created_by UUID REFERENCES auth.users(id),
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS contact_groups (
 -- TABLE: contact_group_members
 -- Map contacts to groups
 CREATE TABLE IF NOT EXISTS contact_group_members (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     group_id UUID NOT NULL REFERENCES contact_groups(id) ON DELETE CASCADE,
     contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -157,3 +157,4 @@ INSERT INTO email_templates (title, subject, body, variables) VALUES
      'Hello {{name}},\n\nYour booking has been confirmed. We look forward to working with you.\n\nBest regards,\n{{sender}} at {{email}}',
      ARRAY['name', 'sender', 'email'])
 ON CONFLICT DO NOTHING;
+
