@@ -144,6 +144,14 @@ Edge Functions need environment variables for SendGrid API key.
 supabase secrets set SENDGRID_API_KEY="your-sendgrid-key"
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="your-service-key"
 
+# If you want to use Gmail SMTP instead of Resend or SendGrid, set these secrets:
+supabase secrets set EMAIL_PROVIDER="gmail"
+supabase secrets set GMAIL_SMTP_USER="your-gmail-email@example.com"
+supabase secrets set GMAIL_SMTP_PASS="your-app-password-or-smtp-password"
+# Optional SMTP host/port if you need a custom provider:
+supabase secrets set GMAIL_SMTP_HOST="smtp.gmail.com"
+supabase secrets set GMAIL_SMTP_PORT="587"
+
 # List all secrets
 supabase secrets list
 
