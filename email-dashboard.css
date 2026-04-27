@@ -160,9 +160,42 @@ body[data-page-kind="email-dashboard"] .contact-actions {
   flex-shrink: 0;
 }
 
-body[data-page-kind="email-dashboard"] .contact-actions .btn {
+body[data-page-kind="email-dashboard"] .contact-actions .btn,
+body[data-page-kind="email-dashboard"] .contact-actions .icon-action-btn {
   padding: 4px 8px;
   font-size: 0.72rem;
+}
+
+body[data-page-kind="email-dashboard"] .contact-actions .icon-action-btn {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+body[data-page-kind="email-dashboard"] .contact-actions .icon-action-btn:hover {
+  background: #f8fafc;
+  transform: scale(1.05);
+  border-color: #0f5db6;
+}
+
+body[data-page-kind="email-dashboard"] .contact-actions .icon-action-btn.danger {
+  color: #c62828;
+  border-color: #f8d7da;
+  background: #fff5f5;
+}
+
+body[data-page-kind="email-dashboard"] .contact-actions .icon-action-btn.danger:hover {
+  background: #fee2e2;
+  border-color: #f1a5a5;
 }
 
 body[data-page-kind="email-dashboard"] .btn.danger {

@@ -292,15 +292,19 @@ class EmailDashboard {
             actions.className = 'contact-actions';
 
             const editBtn = document.createElement('button');
-            editBtn.className = 'btn tiny secondary';
-            editBtn.textContent = 'Edit';
+            editBtn.type = 'button';
+            editBtn.className = 'icon-action-btn';
+            editBtn.title = 'Edit contact';
+            editBtn.textContent = '✏️';
             editBtn.addEventListener('click', () => {
                 this.openContactModal(contact);
             });
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn tiny danger';
-            deleteBtn.textContent = 'Delete';
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'icon-action-btn danger';
+            deleteBtn.title = 'Delete contact';
+            deleteBtn.textContent = '🗑️';
             deleteBtn.addEventListener('click', () => {
                 this.deleteContact(contact.id);
             });
