@@ -65,8 +65,9 @@ serve(async (req) => {
   }
 
   try {
-    const provider = (Deno.env.get('EMAIL_PROVIDER') || 'resend').toLowerCase();
-    const { recipientEmail, recipientName, subject, body, senderName, senderEmail } = await req.json();
+    const requestBody = await req.json();
+    const provider = (requestBody.provider || Deno.env.get('EMAIL_PROVIDER') || 'resend').toLowerCase();
+    const { recipientEmail, recipientName, subject, body, senderName, senderEmail } = requestBody;
 
     if (!recipientEmail || !subject || !body) {
       return new Response(

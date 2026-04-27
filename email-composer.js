@@ -166,6 +166,7 @@ ${email.body}
             emails.push({
                 ...personalizedEmail,
                 templateId: config.templateId || null,
+                provider: config.provider || null,
             });
         });
 
@@ -191,6 +192,7 @@ class EmailService {
                 senderName: email.senderName,
                 subject: email.subject,
                 body: email.body,
+                provider: email.provider,
             });
 
             if (response.error) {
@@ -199,8 +201,16 @@ class EmailService {
 
             return response.data;
         } catch (error) {
-            console.error('Error sending email:', error);
-            throw error;
+            const messageParts = [error.message || 'Unknown error'];
+            if (error.status) {
+                messageParts.push(`status ${error.status}`);
+            }
+            if (error.data) {
+                messageParts.push(`details: ${JSON.stringify(error.data)}`);
+            }
+            const detailedError = new Error(messageParts.join(' | '));
+            console.error('Error sending email:', error, error.data || error.response || 'no extra response');
+            throw detailedError;
         }
     }
 

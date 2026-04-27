@@ -623,6 +623,7 @@ class EmailDashboard {
             subject: document.getElementById('email-subject').value,
             body: document.getElementById('email-body').value,
             sender: this.currentSender,
+            provider: document.getElementById('provider-select')?.value || null,
             templateId: this.currentTemplate?.id,
         };
 

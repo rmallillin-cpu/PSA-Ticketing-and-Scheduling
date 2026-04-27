@@ -112,6 +112,16 @@
               </div>
 
               <div class="form-group">
+                <label for="provider-select">Email Provider</label>
+                <select id="provider-select" class="form-control">
+                  <option value="">Use project default</option>
+                  <option value="resend">Resend</option>
+                  <option value="gmail">Gmail</option>
+                </select>
+                <small class="form-text">Choose Gmail to send using configured Google SMTP credentials.</small>
+              </div>
+
+              <div class="form-group">
                 <label for="template-select">Template</label>
                 <select id="template-select" class="form-control">
                   <option value="">Custom Email</option>

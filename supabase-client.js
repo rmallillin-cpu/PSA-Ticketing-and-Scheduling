@@ -126,8 +126,12 @@ async function queryDatabase(query) {
  */
 async function callEdgeFunction(functionName, payload) {
     const client = getSupabaseClient();
+    const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
     return await client.functions.invoke(functionName, {
-        body: payload,
+        body,
+        headers: {
+            'Content-Type': 'application/json',
+        },
     });
 }
 
